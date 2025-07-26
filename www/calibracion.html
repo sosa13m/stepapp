@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calibración - StepApp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
-  <link href="style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet"/>
   <style>
     body, html {
       margin: 0;
@@ -19,16 +18,12 @@
       height: 100vh;
       object-fit: cover;
     }
-    #grid-canvas, #canvas-foto {
+    #canvas {
       position: absolute;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      pointer-events: none;
-    }
-    #canvas-foto {
-      display: none;
       pointer-events: auto;
     }
     .control-btn {
@@ -58,178 +53,116 @@
   </style>
 </head>
 <body>
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+<div id="medida-cm" class="animate__animated animate__fadeInDown">Largo: 0.0 cm</div>
+<button id="btn-usar" class="btn btn-success control-btn animate__animated animate__fadeIn" style="display: none;">✅ Usar</button>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="js/supabase-config.js"></script>
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const btnUsar = document.getElementById('btn-usar');
+  const medidaText = document.getElementById('medida-cm');
+  let puntos = [];
 
-  <video id="video" autoplay playsinline></video>
-  <canvas id="grid-canvas"></canvas>
-  <canvas id="canvas-foto"></canvas>
-
-  <div id="medida-cm" class="animate__animated animate__fadeInDown">Largo: 0.0 cm</div>
-
-  <button id="btn-capturar" class="btn btn-primary control-btn animate__animated animate__pulse animate__infinite">📸 Capturar</button>
-  <button id="btn-usar" class="btn btn-success control-btn animate__animated animate__fadeIn" style="display: none;">✅ Usar</button>
-  <button id="btn-repetir" class="btn btn-warning control-btn animate__animated animate__fadeIn" style="display: none; left: 30%;">🔄 Repetir</button>
-
-  <script>
-    const video = document.getElementById('video');
-    const gridCanvas = document.getElementById('grid-canvas');
-    const gridCtx = gridCanvas.getContext('2d');
-    const canvasFoto = document.getElementById('canvas-foto');
-    const ctx = canvasFoto.getContext('2d');
-
-    const btnCapturar = document.getElementById('btn-capturar');
-    const btnUsar = document.getElementById('btn-usar');
-    const btnRepetir = document.getElementById('btn-repetir');
-    const medidaCm = document.getElementById('medida-cm');
-
-    let puntos = [];
-    let imgActual = null;
-    let draggingIndex = -1;
-
-    async function iniciarCamara() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        video.srcObject = stream;
-      } catch (err) {
-        alert('Error al acceder a la cámara: ' + err.message);
-      }
+  async function iniciarCamara() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
+    } catch (error) {
+      alert("No se pudo acceder a la cámara");
     }
-    iniciarCamara();
+  }
 
-    function dibujarCuadricula() {
-      gridCanvas.width = window.innerWidth;
-      gridCanvas.height = window.innerHeight;
-      gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
-      gridCtx.strokeStyle = 'rgba(0,255,0,0.4)';
-      gridCtx.lineWidth = 1;
+  iniciarCamara();
 
-      const terciosX = gridCanvas.width / 3;
-      const terciosY = gridCanvas.height / 3;
+  function redibujar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      for (let i = 1; i < 3; i++) {
-        gridCtx.beginPath();
-        gridCtx.moveTo(terciosX * i, 0);
-        gridCtx.lineTo(terciosX * i, gridCanvas.height);
-        gridCtx.stroke();
+    ctx.fillStyle = 'yellow';
+    ctx.strokeStyle = '#0f0';
+    ctx.lineWidth = 2;
 
-        gridCtx.beginPath();
-        gridCtx.moveTo(0, terciosY * i);
-        gridCtx.lineTo(gridCanvas.width, terciosY * i);
-        gridCtx.stroke();
-      }
-      requestAnimationFrame(dibujarCuadricula);
-    }
-    dibujarCuadricula();
-
-    btnCapturar.addEventListener('click', () => {
-      const track = video.srcObject.getVideoTracks()[0];
-      const imageCapture = new ImageCapture(track);
-      imageCapture.takePhoto().then(blob => {
-        const img = new Image();
-        img.onload = () => {
-          video.style.display = 'none';
-          gridCanvas.style.display = 'none';
-          canvasFoto.style.display = 'block';
-          btnCapturar.style.display = 'none';
-          btnUsar.style.display = 'block';
-          btnRepetir.style.display = 'block';
-
-          canvasFoto.width = window.innerWidth;
-          canvasFoto.height = window.innerHeight;
-          ctx.drawImage(img, 0, 0, canvasFoto.width, canvasFoto.height);
-          imgActual = img;
-          puntos = [];
-          actualizarCanvas();
-        };
-        img.src = URL.createObjectURL(blob);
-      }).catch(err => alert('Error al capturar la foto: ' + err.message));
+    puntos.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillText(i + 1, p.x + 10, p.y - 10);
     });
 
-    function actualizarCanvas() {
-      ctx.clearRect(0, 0, canvasFoto.width, canvasFoto.height);
-      ctx.drawImage(imgActual, 0, 0, canvasFoto.width, canvasFoto.height);
+    if (puntos.length === 2) {
+      ctx.beginPath();
+      ctx.moveTo(puntos[0].x, puntos[0].y);
+      ctx.lineTo(puntos[1].x, puntos[1].y);
+      ctx.stroke();
 
-      ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
-      ctx.strokeStyle = '#00f';
-      ctx.lineWidth = 2;
+      const dist = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+      const cm = (dist * 0.1).toFixed(1);
+      medidaText.innerText = `Largo: ${cm} cm`;
+      btnUsar.style.display = 'block';
+    } else {
+      medidaText.innerText = 'Largo: 0.0 cm';
+      btnUsar.style.display = 'none';
+    }
+  }
 
-      puntos.forEach((p, i) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.font = 'bold 16px Arial';
-        ctx.fillStyle = '#fff';
-        ctx.fillText(i + 1, p.x + 10, p.y - 10);
-      });
+  function getTouchCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+  }
 
-      if (puntos.length >= 2) {
-        ctx.strokeStyle = '#0f0';
-        ctx.beginPath();
-        ctx.moveTo(puntos[0].x, puntos[0].y);
-        ctx.lineTo(puntos[1].x, puntos[1].y);
-        ctx.stroke();
+  canvas.addEventListener('touchstart', e => {
+    if (puntos.length >= 2) return;
+    const { x, y } = getTouchCoords(e);
+    puntos.push({ x, y });
+    redibujar();
+  });
 
-        const distancia = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-        const factor = 0.1;
-        medidaCm.innerText = `Largo: ${(distancia * factor).toFixed(1)} cm`;
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    redibujar();
+  });
+
+  window.dispatchEvent(new Event('resize'));
+
+  btnUsar.addEventListener('click', async () => {
+    if (puntos.length < 2) return;
+
+    const dist = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+    const cm = (dist * 0.1).toFixed(1);
+    localStorage.setItem('medida_cm', cm);
+    console.log('Guardando en localStorage:', cm);
+
+    // Guardar en Supabase
+    const userData = JSON.parse(localStorage.getItem('datosUsuario'));
+    if (userData) {
+      const { nombre, rut, region, ciudad, direccion, correo, telefono } = userData;
+      const timestamp = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('pacientes')
+        .insert([{
+          nombre, rut, region, ciudad, direccion, correo, telefono,
+          timestamp, medida_cm: cm, estado: 'Pendiente'
+        }]);
+
+      if (error) {
+        console.error('Error al guardar en Supabase:', error);
       } else {
-        medidaCm.innerText = `Largo: 0.0 cm`;
+        console.log('Medida guardada en Supabase');
       }
     }
 
-    canvasFoto.addEventListener('mousedown', e => {
-      const rect = canvasFoto.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const idx = puntos.findIndex(p => Math.hypot(p.x - x, p.y - y) < 10);
-      if (idx >= 0) {
-        draggingIndex = idx;
-      } else if (puntos.length < 2) {
-        puntos.push({ x, y });
-        actualizarCanvas();
-      }
-    });
-
-    canvasFoto.addEventListener('mousemove', e => {
-      if (draggingIndex >= 0) {
-        const rect = canvasFoto.getBoundingClientRect();
-        puntos[draggingIndex].x = e.clientX - rect.left;
-        puntos[draggingIndex].y = e.clientY - rect.top;
-        actualizarCanvas();
-      }
-    });
-
-    canvasFoto.addEventListener('mouseup', () => {
-      draggingIndex = -1;
-    });
-
-    function calcularMedida() {
-      if (puntos.length >= 2) {
-        const distancia = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-        const factor = 0.1;
-        return (distancia * factor).toFixed(1);
-      }
-      return null;
-    }
-
-    btnUsar.addEventListener('click', () => {
-      if (puntos.length < 2) {
-        alert('Debes marcar al menos dos puntos para medir.');
-        return;
-      }
-
-      const medida = calcularMedida();
-      if (medida) {
-        localStorage.setItem('medida_cm', medida);
-        console.log('Medida guardada en localStorage:', medida);
-        window.location.href = 'foto-receta.html';
-      }
-    });
-
-    btnRepetir.addEventListener('click', () => location.reload());
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="js/supabase-config.js"></script>
+    window.location.href = 'foto-receta.html';
+  });
+</script>
 </body>
 </html>
