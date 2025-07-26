@@ -2,160 +2,219 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calibración</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="js/supabase-config.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calibración - StepApp</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="stylesheet" href="style.css" />
   <style>
-    body {
+    body, html {
       margin: 0;
+      padding: 0;
+      background-color: #000;
       overflow: hidden;
-      background-color: black;
     }
-
-    video, canvas {
+    #video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+    #grid-canvas, #canvas-foto {
       position: absolute;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: cover;
+      pointer-events: none;
     }
-
-    #largoTexto {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      color: white;
-      font-size: 1.6rem;
-      background-color: rgba(0,0,0,0.6);
-      padding: 6px 12px;
-      border-radius: 8px;
+    #canvas-foto {
+      display: none;
+      pointer-events: auto;
     }
-
-    .botones {
-      position: absolute;
+    .control-btn {
+      position: fixed;
       bottom: 20px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      z-index: 2;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      border-radius: 50px;
+      padding: 10px 20px;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     }
-
-    .botones button {
-      padding: 12px 20px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 1.5rem;
+    #medida-cm {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 15px;
+      border-radius: 20px;
       font-weight: bold;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-
-    #repetirBtn {
-      background-color: #ffc107;
-    }
-
-    #usarBtn {
-      background-color: #28a745;
-      color: white;
+      font-size: 18px;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline></video>
-  <canvas id="canvas"></canvas>
-  <div id="largoTexto">Toca 2 puntos</div>
 
-  <div class="botones">
-    <button id="repetirBtn">🔄 Repetir</button>
-    <button id="usarBtn">✅ Usar</button>
-  </div>
+<video id="video" autoplay playsinline></video>
+<canvas id="grid-canvas"></canvas>
+<canvas id="canvas-foto"></canvas>
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const largoTexto = document.getElementById('largoTexto');
-    let puntos = [];
+<div id="medida-cm" class="animate__animated animate__fadeInDown">Largo: 0.0 cm</div>
 
-    navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'environment',
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    })
-    .then(stream => {
-      video.srcObject = stream;
-    });
+<button id="btn-capturar" class="btn btn-primary control-btn animate__animated animate__pulse animate__infinite">📸 Capturar</button>
+<button id="btn-usar" class="btn btn-success control-btn animate__animated animate__fadeIn" style="display: none;">✅ Usar</button>
+<button id="btn-repetir" class="btn btn-warning control-btn animate__animated animate__fadeIn" style="display: none; left: 30%;">🔄 Repetir</button>
 
-    function redibujar() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="js/supabase-config.js"></script>
 
-      if (puntos.length > 0) {
-        puntos.forEach((p, i) => {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 12, 0, 2 * Math.PI);
-          ctx.fillStyle = i === 0 ? "yellow" : "white";
-          ctx.fill();
-          ctx.fillStyle = "black";
-          ctx.font = "18px sans-serif";
-          ctx.fillText(i + 1, p.x - 5, p.y + 5);
-        });
-      }
+<script>
+const video = document.getElementById('video');
+const gridCanvas = document.getElementById('grid-canvas');
+const gridCtx = gridCanvas.getContext('2d');
+const canvasFoto = document.getElementById('canvas-foto');
+const ctx = canvasFoto.getContext('2d');
 
-      if (puntos.length === 2) {
-        ctx.beginPath();
-        ctx.moveTo(puntos[0].x, puntos[0].y);
-        ctx.lineTo(puntos[1].x, puntos[1].y);
-        ctx.strokeStyle = "lime";
-        ctx.lineWidth = 3;
-        ctx.stroke();
+const btnCapturar = document.getElementById('btn-capturar');
+const btnUsar = document.getElementById('btn-usar');
+const btnRepetir = document.getElementById('btn-repetir');
+const medidaCm = document.getElementById('medida-cm');
 
-        const distanciaPx = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-        const largoCm = (distanciaPx / window.innerHeight) * 25; // Ajuste aproximado
-        largoTexto.innerText = `Largo: ${largoCm.toFixed(1)} cm`;
-        largoTexto.dataset.valor = largoCm.toFixed(1);
-      }
-    }
+let puntos = [];
+let imgActual = null;
+let draggingIndex = -1;
 
-    canvas.addEventListener('click', e => {
-      if (puntos.length < 2) {
-        puntos.push({ x: e.clientX, y: e.clientY });
-        redibujar();
-      }
-    });
+async function iniciarCamara() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = stream;
+  } catch (err) {
+    alert('Error al acceder a la cámara: ' + err.message);
+  }
+}
+iniciarCamara();
 
-    document.getElementById('repetirBtn').addEventListener('click', () => {
+function dibujarCuadricula() {
+  gridCanvas.width = window.innerWidth;
+  gridCanvas.height = window.innerHeight;
+  gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+  gridCtx.strokeStyle = 'rgba(0,255,0,0.4)';
+  gridCtx.lineWidth = 1;
+  const terciosX = gridCanvas.width / 3;
+  const terciosY = gridCanvas.height / 3;
+
+  for (let i = 1; i < 3; i++) {
+    gridCtx.beginPath();
+    gridCtx.moveTo(terciosX * i, 0);
+    gridCtx.lineTo(terciosX * i, gridCanvas.height);
+    gridCtx.stroke();
+    gridCtx.beginPath();
+    gridCtx.moveTo(0, terciosY * i);
+    gridCtx.lineTo(gridCanvas.width, terciosY * i);
+    gridCtx.stroke();
+  }
+  requestAnimationFrame(dibujarCuadricula);
+}
+dibujarCuadricula();
+
+btnCapturar.addEventListener('click', () => {
+  const track = video.srcObject.getVideoTracks()[0];
+  const imageCapture = new ImageCapture(track);
+  imageCapture.takePhoto().then(blob => {
+    const img = new Image();
+    img.onload = () => {
+      video.style.display = 'none';
+      gridCanvas.style.display = 'none';
+      canvasFoto.style.display = 'block';
+      btnCapturar.style.display = 'none';
+      btnUsar.style.display = 'block';
+      btnRepetir.style.display = 'block';
+
+      canvasFoto.width = window.innerWidth;
+      canvasFoto.height = window.innerHeight;
+      ctx.drawImage(img, 0, 0, canvasFoto.width, canvasFoto.height);
+      imgActual = img;
       puntos = [];
-      largoTexto.innerText = "Toca 2 puntos";
-      redibujar();
-    });
+      actualizarCanvas();
+    };
+    img.src = URL.createObjectURL(blob);
+  }).catch(err => alert('Error al capturar la foto: ' + err.message));
+});
 
-    document.getElementById('usarBtn').addEventListener('click', async () => {
-      const largoFinal = largoTexto.dataset.valor;
-      const codigo = localStorage.getItem('codigo_pedido') || `pedido-${Date.now()}`;
+function actualizarCanvas() {
+  ctx.clearRect(0, 0, canvasFoto.width, canvasFoto.height);
+  ctx.drawImage(imgActual, 0, 0, canvasFoto.width, canvasFoto.height);
 
-      const { error } = await supabase
-        .from('pacientes')
-        .update({ largo_pie: largoFinal })
-        .eq('codigo_pedido', codigo);
+  ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+  ctx.strokeStyle = '#00f';
+  ctx.lineWidth = 2;
 
-      if (error) {
-        alert("Error al guardar en Supabase");
-        console.error(error);
-      } else {
-        window.location.href = 'foto-receta.html';
-      }
-    });
+  puntos.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = 'bold 16px Arial';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(i + 1, p.x + 10, p.y - 10);
+  });
 
-    window.addEventListener('resize', redibujar);
-    video.addEventListener('loadeddata', redibujar);
-  </script>
+  if (puntos.length >= 2) {
+    ctx.strokeStyle = '#0f0';
+    ctx.beginPath();
+    ctx.moveTo(puntos[0].x, puntos[0].y);
+    ctx.lineTo(puntos[1].x, puntos[1].y);
+    ctx.stroke();
+    const distancia = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+    const factor = 0.1;
+    medidaCm.innerText = `Largo: ${(distancia * factor).toFixed(1)} cm`;
+  } else {
+    medidaCm.innerText = `Largo: 0.0 cm`;
+  }
+}
+
+canvasFoto.addEventListener('pointerdown', e => {
+  const rect = canvasFoto.getBoundingClientRect();
+  const x = e.pageX - rect.left;
+  const y = e.pageY - rect.top;
+  const idx = puntos.findIndex(p => Math.hypot(p.x - x, p.y - y) < 10);
+  if (idx >= 0) {
+    draggingIndex = idx;
+  } else if (puntos.length < 2) {
+    puntos.push({ x, y });
+    actualizarCanvas();
+  }
+});
+
+canvasFoto.addEventListener('pointermove', e => {
+  if (draggingIndex >= 0) {
+    const rect = canvasFoto.getBoundingClientRect();
+    puntos[draggingIndex].x = e.pageX - rect.left;
+    puntos[draggingIndex].y = e.pageY - rect.top;
+    actualizarCanvas();
+  }
+});
+
+canvasFoto.addEventListener('pointerup', () => draggingIndex = -1);
+
+btnUsar.addEventListener('click', () => {
+  if (puntos.length < 2) {
+    alert('Debes marcar dos puntos.');
+  } else {
+    const distancia = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+    const medida = (distancia * 0.1).toFixed(1);
+    localStorage.setItem('medida_cm', medida);
+    alert('Medición guardada.');
+    window.location.href = 'foto-receta.html';
+  }
+});
+
+btnRepetir.addEventListener('click', () => location.reload());
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
