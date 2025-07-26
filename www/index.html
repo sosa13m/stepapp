@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StepApp Astor - Inicio</title>
+
+  <!-- Animate.css -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+  <!-- Bootstrap -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* Fondo degradado azul-verde */
+    body {
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #0d6efd 0%, #198754 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      background: #fff;
+      padding: 3rem 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgb(0 0 0 / 0.15);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    #app-title {
+      color: #198754; /* verde */
+      font-weight: 700;
+      font-size: 3rem;
+      margin-bottom: 3rem;
+      text-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+    }
+
+    #buttons-container button {
+      font-size: 1.3rem;
+      font-weight: 600;
+      border-radius: 15px;
+      padding: 15px 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgb(25 135 84 / 0.3);
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Botón azul */
+    #btn-ver-pedido {
+      background-color: #0d6efd;
+      color: white;
+      margin-bottom: 1rem;
+    }
+    #btn-ver-pedido:hover {
+      background-color: #0b5ed7;
+      box-shadow: 0 10px 25px rgb(13 110 253 / 0.6);
+      transform: translateY(-3px);
+    }
+
+    /* Botón verde */
+    #btn-iniciar-compra {
+      background-color: #198754;
+      color: white;
+      margin-bottom: 1rem;
+    }
+    #btn-iniciar-compra:hover {
+      background-color: #146c43;
+      box-shadow: 0 10px 25px rgb(25 135 84 / 0.6);
+      transform: translateY(-3px);
+    }
+
+    /* Botón blanco con borde verde */
+    #btn-login-admin {
+      background-color: white;
+      color: #198754;
+      border: 2px solid #198754;
+      font-weight: 700;
+    }
+    #btn-login-admin:hover {
+      background-color: #198754;
+      color: white;
+      box-shadow: 0 10px 25px rgb(25 135 84 / 0.6);
+      transform: translateY(-3px);
+    }
+
+    /* Para animar la salida del título */
+    .animate__backOutRight {
+      --animate-duration: 0.8s;
+    }
+
+    /* Para animar la salida de los botones */
+    .animate__fadeOut {
+      --animate-duration: 0.6s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container animate__animated animate__bounceInDown" id="container">
+    <h1 id="app-title" class="animate__animated animate__bounceInDown">StepApp Astor</h1>
+
+    <div id="buttons-container" class="d-flex flex-column gap-3">
+      <button id="btn-ver-pedido">Ver tu Pedido</button>
+      <button id="btn-iniciar-compra">Iniciar Compra</button>
+      <button id="btn-login-admin">Login Admin</button>
+    </div>
+  </div>
+
+  <script>
+    const title = document.getElementById("app-title");
+    const buttonsContainer = document.getElementById("buttons-container");
+    const container = document.getElementById("container");
+
+    function animateOutAndRedirect(url) {
+      // Animar título y botones
+      title.classList.remove("animate__bounceInDown");
+      title.classList.add("animate__backOutRight");
+
+      buttonsContainer.classList.add("animate__animated", "animate__fadeOut");
+
+      setTimeout(() => {
+        window.location.href = url;
+      }, 800);
+    }
+
+    document
+      .getElementById("btn-ver-pedido")
+      .addEventListener("click", () => animateOutAndRedirect("ver-pedido.html"));
+
+    document
+      .getElementById("btn-iniciar-compra")
+      .addEventListener("click", () => animateOutAndRedirect("video-pie.html"));
+
+    document
+      .getElementById("btn-login-admin")
+      .addEventListener("click", () => animateOutAndRedirect("admin.html"));
+  </script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  ></script>
+</body>
+</html>

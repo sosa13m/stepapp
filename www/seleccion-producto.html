@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Selecciona tu Plantilla</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet"/>
+  <link rel="icon" href="https://www.astorarica.cl/favicon.ico" />
+  <style>
+    body {
+      background: linear-gradient(160deg, #ffffff, #e3f2fd);
+      font-family: 'Roboto', sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: bold;
+    }
+
+    .opcion {
+      background-color: #ffffff;
+      border: 2px solid #90caf9;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .opcion:hover {
+      background-color: #e3f2fd;
+      transform: scale(1.02);
+    }
+
+    .container {
+      max-width: 450px;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="animate__animated animate__fadeInDown">Selecciona el tipo de plantilla</h1>
+
+  <div class="opcion" onclick="seleccionarPlantilla('blanda')">Plantilla Blanda</div>
+  <div class="opcion" onclick="seleccionarPlantilla('rígida')">Plantilla Rígida</div>
+  <div class="opcion" onclick="seleccionarPlantilla('deportiva')">Plantilla Deportiva</div>
+  <div class="opcion" onclick="seleccionarPlantilla('personalizada')">Plantilla Personalizada</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/supabase-config.js"></script>
+
+  <script>
+    async function seleccionarPlantilla(plantillaSeleccionada) {
+      const datos = JSON.parse(localStorage.getItem("datosUsuario"));
+      const medida_cm = parseFloat(localStorage.getItem("medida_cm"));
+      const receta_url = localStorage.getItem("recetaURL");
+      const codigo = "STEP-" + Math.floor(1000 + Math.random() * 9000);
+
+      if (!datos || isNaN(medida_cm)) {
+        alert("Faltan datos del usuario o medida del pie.");
+        return;
+      }
+
+      const pacienteData = {
+        nombre: datos.nombre,
+        rut: datos.rut,
+        region: datos.region,
+        ciudad: datos.ciudad,
+        direccion: datos.direccion,
+        correo: datos.correo,
+        telefono: datos.telefono || "",
+        timestamp: new Date().toISOString(),
+        plantilla: plantillaSeleccionada,
+        codigo_pedido: codigo,
+        medida_cm: medida_cm,
+        receta_url: receta_url || "",
+        estado: "pendiente",
+        confirmado: false
+      };
+
+      const { error } = await supabase
+        .from("pacientes")
+        .insert([pacienteData]);
+
+      if (error) {
+        console.error("Error al guardar en pacientes:", error);
+        alert("Ocurrió un error al guardar los datos.");
+        return;
+      }
+
+      localStorage.setItem("codigoPedido", codigo);
+      window.location.href = "confirmacion.html";
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ver mi Pedido</title>
+  <link rel="icon" href="https://www.astorarica.cl/wp-content/uploads/2021/09/favicon.ico">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(160deg, #f1f8ff 0%, #acffa4 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+      background-color: #fff;
+      text-align: center;
+    }
+    .form-control {
+      text-align: center;
+    }
+    .estado {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 1rem;
+      font-weight: 500;
+      animation: fadeIn 1s ease;
+    }
+    .pendiente {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .validado {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .no-encontrado {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card animate__animated animate__fadeIn">
+    <h2 class="mb-3">Consulta tu pedido</h2>
+    <input type="text" id="codigoInput" class="form-control mb-3" placeholder="Ej: STEP-1234">
+    <button id="buscarBtn" class="btn btn-primary w-100">Ver estado</button>
+    <div id="resultado" class="estado d-none mt-4"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabase = createClient(
+      'https://yswiovzterqvozyolhgb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzd2lvdnp0ZXJxdm96eW9saGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNjQ0MzMsImV4cCI6MjA2ODc0MDQzM30.8sNIErpEBVRy0DkWIEa1e_oqKx_FrDmlIgSc4VJs29I'
+    );
+
+    const buscarBtn = document.getElementById("buscarBtn");
+    buscarBtn.addEventListener("click", buscarPedido);
+
+    async function buscarPedido() {
+      const codigo = document.getElementById("codigoInput").value.trim();
+      const resultado = document.getElementById("resultado");
+
+      resultado.classList.add("d-none");
+      resultado.className = "estado";
+
+      if (!codigo) {
+        alert("Por favor, ingresa tu código de pedido.");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("pacientes")
+        .select("nombre, plantilla, estado")
+        .eq("codigo_pedido", codigo)
+        .single();
+
+      if (error || !data) {
+        resultado.classList.add("no-encontrado");
+        resultado.textContent = "No se encontró un pedido con ese código.";
+      } else {
+        resultado.classList.add(data.estado === "validado" ? "validado" : "pendiente");
+        resultado.innerHTML = `
+          <div>👤 <strong>${data.nombre}</strong></div>
+          <div>🦶 Plantilla: <strong>${data.plantilla}</strong></div>
+          <div>📦 Estado: <strong>${data.estado === "validado" ? "Validado ✅" : "Pendiente ⌛"}</strong></div>
+        `;
+      }
+
+      resultado.classList.remove("d-none");
+    }
+  </script>
+</body>
+</html>

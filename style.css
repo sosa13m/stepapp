@@ -1,0 +1,136 @@
+/* ==== StepApp General Styles ==== */
+
+body {
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 {
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+  font-weight: bold;
+}
+
+.btn {
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border: none;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border: none;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+}
+
+.step-container {
+  padding: 20px;
+  margin: auto;
+  max-width: 500px;
+  text-align: center;
+}
+
+.step-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.card-stepapp {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+.card-stepapp:hover {
+  transform: scale(1.02);
+}
+
+.input-stepapp {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  color: white;
+}
+
+.input-stepapp::placeholder {
+  color: #ccc;
+}
+
+.navbar-stepapp {
+  background-color: #007bff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+footer {
+  margin-top: auto;
+  text-align: center;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.9em;
+  color: #ddd;
+}
+
+/* ==== Animaciones Personalizadas ==== */
+
+.fade-in-down {
+  animation: fadeInDown 1s ease;
+}
+
+.bounce-in {
+  animation: bounceIn 1s ease;
+}
+
+.back-out-right {
+  animation: backOutRight 0.8s ease forwards;
+}
+
+/* ==== Responsive Ajustes ==== */
+
+@media (max-width: 576px) {
+  .step-title {
+    font-size: 1.5rem;
+  }
+  .btn {
+    font-size: 16px;
+    padding: 10px 15px;
+  }
+}
+
+/* ==== Estados Especiales ==== */
+
+.success-screen {
+  background-color: #28a745 !important;
+  color: white;
+}
+
+.error-screen {
+  background-color: #dc3545 !important;
+  color: white;
+}
