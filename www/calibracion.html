@@ -2,167 +2,160 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calibración - StepApp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calibración</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/supabase-config.js"></script>
   <style>
-    body, html {
+    body {
       margin: 0;
-      padding: 0;
-      background-color: #000;
       overflow: hidden;
+      background-color: black;
     }
-    #video {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-    }
-    #canvas {
+
+    video, canvas {
       position: absolute;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      pointer-events: auto;
+      object-fit: cover;
     }
-    .control-btn {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      border-radius: 50px;
-      padding: 10px 20px;
-      font-size: 18px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    }
-    #medida-cm {
-      position: fixed;
+
+    #largoTexto {
+      position: absolute;
       top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #fff;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 8px 15px;
-      border-radius: 20px;
+      right: 20px;
+      color: white;
+      font-size: 1.6rem;
+      background-color: rgba(0,0,0,0.6);
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    .botones {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 2;
+    }
+
+    .botones button {
+      padding: 12px 20px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 1.5rem;
       font-weight: bold;
-      font-size: 18px;
-      z-index: 10;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    #repetirBtn {
+      background-color: #ffc107;
+    }
+
+    #usarBtn {
+      background-color: #28a745;
+      color: white;
     }
   </style>
 </head>
 <body>
-<video id="video" autoplay playsinline muted></video>
-<canvas id="canvas"></canvas>
-<div id="medida-cm" class="animate__animated animate__fadeInDown">Largo: 0.0 cm</div>
-<button id="btn-usar" class="btn btn-success control-btn animate__animated animate__fadeIn" style="display: none;">✅ Usar</button>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="js/supabase-config.js"></script>
-<script>
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const btnUsar = document.getElementById('btn-usar');
-  const medidaText = document.getElementById('medida-cm');
-  let puntos = [];
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+  <div id="largoTexto">Toca 2 puntos</div>
 
-  async function iniciarCamara() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  <div class="botones">
+    <button id="repetirBtn">🔄 Repetir</button>
+    <button id="usarBtn">✅ Usar</button>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const largoTexto = document.getElementById('largoTexto');
+    let puntos = [];
+
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    })
+    .then(stream => {
       video.srcObject = stream;
-    } catch (error) {
-      alert("No se pudo acceder a la cámara");
-    }
-  }
-
-  iniciarCamara();
-
-  function redibujar() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = 'yellow';
-    ctx.strokeStyle = '#0f0';
-    ctx.lineWidth = 2;
-
-    puntos.forEach((p, i) => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillText(i + 1, p.x + 10, p.y - 10);
     });
 
-    if (puntos.length === 2) {
-      ctx.beginPath();
-      ctx.moveTo(puntos[0].x, puntos[0].y);
-      ctx.lineTo(puntos[1].x, puntos[1].y);
-      ctx.stroke();
+    function redibujar() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const dist = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-      const cm = (dist * 0.1).toFixed(1);
-      medidaText.innerText = `Largo: ${cm} cm`;
-      btnUsar.style.display = 'block';
-    } else {
-      medidaText.innerText = 'Largo: 0.0 cm';
-      btnUsar.style.display = 'none';
-    }
-  }
+      if (puntos.length > 0) {
+        puntos.forEach((p, i) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 12, 0, 2 * Math.PI);
+          ctx.fillStyle = i === 0 ? "yellow" : "white";
+          ctx.fill();
+          ctx.fillStyle = "black";
+          ctx.font = "18px sans-serif";
+          ctx.fillText(i + 1, p.x - 5, p.y + 5);
+        });
+      }
 
-  function getTouchCoords(e) {
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    return {
-      x: touch.clientX - rect.left,
-      y: touch.clientY - rect.top
-    };
-  }
+      if (puntos.length === 2) {
+        ctx.beginPath();
+        ctx.moveTo(puntos[0].x, puntos[0].y);
+        ctx.lineTo(puntos[1].x, puntos[1].y);
+        ctx.strokeStyle = "lime";
+        ctx.lineWidth = 3;
+        ctx.stroke();
 
-  canvas.addEventListener('touchstart', e => {
-    if (puntos.length >= 2) return;
-    const { x, y } = getTouchCoords(e);
-    puntos.push({ x, y });
-    redibujar();
-  });
-
-  window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    redibujar();
-  });
-
-  window.dispatchEvent(new Event('resize'));
-
-  btnUsar.addEventListener('click', async () => {
-    if (puntos.length < 2) return;
-
-    const dist = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-    const cm = (dist * 0.1).toFixed(1);
-    localStorage.setItem('medida_cm', cm);
-    console.log('Guardando en localStorage:', cm);
-
-    // Guardar en Supabase
-    const userData = JSON.parse(localStorage.getItem('datosUsuario'));
-    if (userData) {
-      const { nombre, rut, region, ciudad, direccion, correo, telefono } = userData;
-      const timestamp = new Date().toISOString();
-
-      const { error } = await supabase
-        .from('pacientes')
-        .insert([{
-          nombre, rut, region, ciudad, direccion, correo, telefono,
-          timestamp, medida_cm: cm, estado: 'Pendiente'
-        }]);
-
-      if (error) {
-        console.error('Error al guardar en Supabase:', error);
-      } else {
-        console.log('Medida guardada en Supabase');
+        const distanciaPx = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+        const largoCm = (distanciaPx / window.innerHeight) * 25; // Ajuste aproximado
+        largoTexto.innerText = `Largo: ${largoCm.toFixed(1)} cm`;
+        largoTexto.dataset.valor = largoCm.toFixed(1);
       }
     }
 
-    window.location.href = 'foto-receta.html';
-  });
-</script>
+    canvas.addEventListener('click', e => {
+      if (puntos.length < 2) {
+        puntos.push({ x: e.clientX, y: e.clientY });
+        redibujar();
+      }
+    });
+
+    document.getElementById('repetirBtn').addEventListener('click', () => {
+      puntos = [];
+      largoTexto.innerText = "Toca 2 puntos";
+      redibujar();
+    });
+
+    document.getElementById('usarBtn').addEventListener('click', async () => {
+      const largoFinal = largoTexto.dataset.valor;
+      const codigo = localStorage.getItem('codigo_pedido') || `pedido-${Date.now()}`;
+
+      const { error } = await supabase
+        .from('pacientes')
+        .update({ largo_pie: largoFinal })
+        .eq('codigo_pedido', codigo);
+
+      if (error) {
+        alert("Error al guardar en Supabase");
+        console.error(error);
+      } else {
+        window.location.href = 'foto-receta.html';
+      }
+    });
+
+    window.addEventListener('resize', redibujar);
+    video.addEventListener('loadeddata', redibujar);
+  </script>
 </body>
 </html>
