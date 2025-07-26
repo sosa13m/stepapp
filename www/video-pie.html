@@ -2,87 +2,54 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Medición del Pie - StepApp</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/styles.css" />
   <style>
     body {
-      background: linear-gradient(to bottom right, #e6f5e6, #d5e9f7);
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 100vh;
+      background-color: #e5f7ec;
       margin: 0;
-      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
     }
-    header {
-      padding: 20px;
+    .container {
+      max-width: 400px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       text-align: center;
     }
-    h1 {
-      color: #00894d;
-      font-weight: 700;
-    }
-    .indicaciones {
-      padding: 20px;
-      font-size: 1rem;
-      color: #333;
-      max-width: 700px;
-      margin: 0 auto;
-      text-align: justify;
-    }
-    .btn-medicion {
-      background-color: #00894d;
+    .boton {
+      background-color: #3aa86e;
+      color: #fff;
       border: none;
-      color: white;
-      padding: 12px 25px;
-      border-radius: 50px;
-      font-size: 1.2rem;
-      margin: 30px auto;
-      display: block;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      transition: background-color 0.3s;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 10px;
+      margin-top: 20px;
+      cursor: pointer;
+      width: 100%;
     }
-    .btn-medicion:hover {
-      background-color: #006b3a;
+    .boton:hover {
+      background-color: #33965f;
     }
-    footer {
-      text-align: center;
-      font-size: 0.9rem;
-      color: #555;
-      padding-bottom: 10px;
+    p {
+      text-align: left;
+      font-size: 15px;
+      margin: 10px 0;
     }
   </style>
 </head>
 <body>
-
-  <header class="animate__animated animate__fadeInRight">
-    <h1>Medición del Pie</h1>
-  </header>
-
-  <main class="indicaciones animate__animated animate__fadeIn">
-    <p>Antes de comenzar, por favor sigue estas recomendaciones para que la medición sea lo más precisa posible:</p>
-    <ul>
-      <li>Ubica tu pie descalzo a una distancia de entre 50 y 70 cm de la cámara del celular (aproximadamente a la altura de la rodilla).</li>
-      <li>Asegúrate de estar en un lugar bien iluminado.</li>
-      <li>El talón y el dedo pulgar deben estar claramente visibles.</li>
-      <li>Asegúrate de que el pie esté bien alineado y no se mueva durante la medición.</li>
-      <li>Evita sombras o reflejos que dificulten la lectura de la imagen.</li>
-      <li>Tomar la fotografia desde arriba es lo ideal para que se pueda medir el pie completo.</li>
-    </ul>
-  </main>
-
-  <button onclick="location.href='calibracion.html'" class="btn-medicion animate__animated animate__pulse animate__infinite">
-    Comenzar Medición
-  </button>
-
-  <footer>
-    StepApp - ASTOR Arica
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <div class="container animate__animated animate__fadeInRight">
+    <h2 class="animate__animated animate__fadeInRight">Instrucciones</h2>
+    <p>1. Asegúrate de estar en un lugar con buena iluminación.</p>
+    <p>2. Coloca el pie descalzo a una distancia de entre 50 a 70 cm de la cámara (un poco más arriba de la rodilla).</p>
+    <p>3. Asegúrate de que el talón y el dedo pulgar se vean claramente.</p>
+    <p>4. Cuando estés listo, presiona el botón de abajo.</p>
+    <button class="boton" onclick="location.href='calibracion.html'">Iniciar medición</button>
+  </div>
 </body>
 </html>
