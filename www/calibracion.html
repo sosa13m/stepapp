@@ -6,203 +6,250 @@
   <title>Calibración - StepApp</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
-      background-color: #000;
-      height: 100vh;
-      overflow: hidden;
+      background: #0fd2d2;
+      min-height: 100vh;
       font-family: 'Segoe UI', sans-serif;
     }
-
-    #pantallaCamara {
-      width: 100vw;
-      height: 100vh;
+    .contenedor {
+      background: #fff;
+      border-radius: 24px;
+      margin: 0 auto;
+      padding: 16px;
+      max-width: 480px;
+      min-height: 90vh;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      box-shadow: 0 0 20px rgba(44,205,224,0.08);
     }
-
-    .cuadro-instrucciones {
-      position: absolute;
-      top: 0;
-      width: 100%;
-      padding: 12px;
-      background: #fff;
-      z-index: 10;
-      text-align: center;
-      border-radius: 0 0 24px 24px;
+    .indicaciones {
+      color: #1a535c;
       font-size: 14px;
-      color: #333;
+      margin-bottom: 10px;
+      text-align: center;
+      font-weight: 500;
+      padding: 0 10px;
     }
-
+    #img-container {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      min-height: 260px;
+      margin: 0 auto;
+      background: #222;
+      border-radius: 14px;
+      overflow: hidden;
+    }
     #imagenPreview {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
+      width: 100%;
+      display: none;
+      border-radius: 12px;
     }
-
     #canvas {
       position: absolute;
       top: 0;
       left: 0;
-      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: none;
+      pointer-events: none;
     }
-
-    .resultado {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 16px;
-      z-index: 20;
+    #resultado {
+      color: #222;
+      font-weight: bold;
+      margin-top: 14px;
+      font-size: 18px;
     }
-
     .btn {
-      margin: 8px;
-      padding: 12px 20px;
+      margin: 10px 4px 0 4px;
       background-color: #2a9d8f;
       color: #fff;
+      padding: 12px 24px;
       border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      z-index: 20;
+      border-radius: 12px;
+      font-size: 17px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.13);
+      transition: 0.13s;
     }
-
+    .btn:active {transform: scale(0.96);}
     #btnsContainer {
-      position: absolute;
-      bottom: 20px;
-      z-index: 20;
+      margin-top: 22px;
+      width: 100%;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    @media (max-width: 500px) {
+      .contenedor {max-width: 98vw; min-height: 99vh;}
+      #img-container {max-width: 97vw;}
     }
   </style>
 </head>
 <body>
-  <div id="pantallaCamara" class="animate__animated animate__fadeInRight">
-    <div class="cuadro-instrucciones">
+  <div class="contenedor animate__animated animate__fadeInRight">
+    <div class="indicaciones">
       Coloca el pie a 50-70 cm de la cámara (altura de la rodilla aprox.), con buena iluminación.<br/>
-      Asegúrate que se vea bien el talón y el dedo pulgar.
+      Asegúrate de marcar talón y dedo pulgar con precisión.
     </div>
-    
-    <input type="file" accept="image/*" capture="environment" id="inputCamara" style="display: none;" />
-    <img id="imagenPreview" style="display: none;" />
-    <canvas id="canvas"></canvas>
-    <div class="resultado" id="resultado" style="display:none;"></div>
-
-    <div id="btnsContainer">
-      <button class="btn" onclick="document.getElementById('inputCamara').click()">Abrir cámara</button>
-      <button class="btn" id="btnUsar" style="display: none;" onclick="continuar()">Usar esta medida</button>
+    <div id="img-container">
+      <input type="file" accept="image/*" capture="environment" id="inputCamara"
+        style="position:absolute;top:40%;left:0;right:0;margin:auto;width:100%;height:40px;opacity:0.01;z-index:3;display:block;cursor:pointer;">
+      <img id="imagenPreview" />
+      <canvas id="canvas"></canvas>
+    </div>
+    <div id="resultado"></div>
+    <div id="btnsContainer" style="display:none;">
+      <button class="btn" id="btnRepetir">Repetir</button>
+      <button class="btn" id="btnUsar">Usar esta medida</button>
     </div>
   </div>
 
   <script src="js/supabase-config.js"></script>
   <script>
     const input = document.getElementById('inputCamara');
+    const img = document.getElementById('imagenPreview');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const imgPreview = document.getElementById('imagenPreview');
     const resultado = document.getElementById('resultado');
+    const btnsContainer = document.getElementById('btnsContainer');
+    const btnRepetir = document.getElementById('btnRepetir');
     const btnUsar = document.getElementById('btnUsar');
-    const CM_POR_PIXEL = 0.026; // Puedes ajustar esto según tus pruebas reales
 
     let puntos = [];
     let imgNaturalWidth = 0;
     let imgNaturalHeight = 0;
 
+    // Para calibrar la conversión de pixel a cm, ajusta este valor:
+    const CM_POR_PIXEL = 0.0265; // (prueba en tu dispositivo real)
+
     input.addEventListener('change', (event) => {
       const file = event.target.files[0];
       if (!file) return;
-      const img = new Image();
-      img.onload = () => {
-        imgNaturalWidth = img.naturalWidth;
-        imgNaturalHeight = img.naturalHeight;
-        imgPreview.src = img.src;
-        imgPreview.style.display = 'block';
+      const tempImg = new window.Image();
+      tempImg.onload = () => {
+        imgNaturalWidth = tempImg.naturalWidth;
+        imgNaturalHeight = tempImg.naturalHeight;
 
-        canvas.width = imgNaturalWidth;
-        canvas.height = imgNaturalHeight;
-        canvas.style.width = imgPreview.clientWidth + "px";
-        canvas.style.height = imgPreview.clientHeight + "px";
+        img.src = tempImg.src;
+        img.style.display = 'block';
+        canvas.style.display = 'block';
 
+        // Sincroniza tamaño canvas-imagen visual (mantén proporción)
         setTimeout(() => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          canvas.style.pointerEvents = 'auto';
-        }, 100);
+          const w = img.clientWidth, h = img.clientHeight;
+          canvas.width = w; canvas.height = h;
+          dibujar(); // inicializa limpio
+        }, 20);
+
+        // Oculta input
+        input.style.display = "none";
+        btnsContainer.style.display = "flex";
       };
-      img.src = URL.createObjectURL(file);
-      imgPreview.src = img.src;
-    });
-
-    canvas.addEventListener('click', (e) => {
-      if (puntos.length >= 2) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-      puntos.push({ x, y });
-      dibujar();
-
-      if (puntos.length === 2) {
-        const d = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-        const medidaCm = (d * CM_POR_PIXEL).toFixed(1);
-        resultado.style.display = 'block';
-        resultado.innerText = `Largo: ${medidaCm} cm`;
-        localStorage.setItem('medida_cm', medidaCm);
-        guardarEnSupabase(medidaCm);
-        btnUsar.style.display = 'block';
-      }
+      tempImg.src = URL.createObjectURL(file);
     });
 
     function dibujar() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (puntos.length >= 1) {
-        puntos.forEach((p, i) => {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 20, 0, 2 * Math.PI);
-          ctx.fillStyle = 'red';
-          ctx.fill();
+      // Dibuja los puntos
+      puntos.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 16, 0, 2 * Math.PI);
+        ctx.fillStyle = "#00E676";
+        ctx.fill();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.stroke();
 
-          ctx.fillStyle = 'white';
-          ctx.font = "20px Arial";
-          ctx.fillText(i + 1, p.x - 5, p.y + 5);
-        });
-      }
+        ctx.font = "bold 19px Segoe UI";
+        ctx.fillStyle = "#111";
+        ctx.fillText(i + 1, p.x - 8, p.y + 6);
+      });
+      // Dibuja la línea si hay 2 puntos
       if (puntos.length === 2) {
         ctx.beginPath();
         ctx.moveTo(puntos[0].x, puntos[0].y);
         ctx.lineTo(puntos[1].x, puntos[1].y);
-        ctx.strokeStyle = "blue";
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#1976d2";
+        ctx.lineWidth = 5;
         ctx.stroke();
       }
     }
 
-    function continuar() {
-      window.location.href = 'foto-receta.html';
+    // Selección y movimiento de puntos
+    let draggingIndex = -1;
+    canvas.addEventListener('pointerdown', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+      // Si toca cerca de punto existente, moverlo
+      for (let i = 0; i < puntos.length; i++) {
+        if (Math.hypot(puntos[i].x - x, puntos[i].y - y) < 25) {
+          draggingIndex = i;
+          return;
+        }
+      }
+      // Si menos de 2, crear punto
+      if (puntos.length < 2) {
+        puntos.push({ x, y });
+        dibujar();
+        if (puntos.length === 2) mostrarLargo();
+      }
+    });
+    canvas.addEventListener('pointermove', e => {
+      if (draggingIndex < 0) return;
+      const rect = canvas.getBoundingClientRect();
+      puntos[draggingIndex].x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      puntos[draggingIndex].y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      dibujar();
+      if (puntos.length === 2) mostrarLargo();
+    });
+    canvas.addEventListener('pointerup', () => draggingIndex = -1);
+    canvas.addEventListener('pointercancel', () => draggingIndex = -1);
+
+    function mostrarLargo() {
+      const dx = puntos[1].x - puntos[0].x;
+      const dy = puntos[1].y - puntos[0].y;
+      const dPix = Math.hypot(dx, dy);
+
+      // Conversión a pixeles nativos de la imagen:
+      const ratioW = imgNaturalWidth / img.clientWidth;
+      const ratioH = imgNaturalHeight / img.clientHeight;
+      const dPxReal = Math.hypot(
+        (puntos[1].x - puntos[0].x) * ratioW,
+        (puntos[1].y - puntos[0].y) * ratioH
+      );
+      const medidaCm = (dPxReal * CM_POR_PIXEL).toFixed(1);
+
+      resultado.textContent = `Largo: ${medidaCm} cm`;
+      resultado.style.display = "block";
+      localStorage.setItem('medida_cm', medidaCm);
+      guardarEnSupabase(medidaCm);
     }
 
+    btnRepetir.onclick = () => {
+      puntos = [];
+      img.src = '';
+      img.style.display = 'none';
+      canvas.style.display = 'none';
+      input.value = '';
+      input.style.display = "block";
+      resultado.textContent = "";
+      btnsContainer.style.display = "none";
+    };
+
+    btnUsar.onclick = () => {
+      if (puntos.length === 2) window.location.href = 'foto-receta.html';
+      else alert('Marca primero dos puntos sobre la imagen.');
+    };
+
     async function guardarEnSupabase(medidaCm) {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('id')
-        .order('id', { ascending: false })
-        .limit(1);
-      const userId = data?.[0]?.id;
-      if (userId) {
-        await supabase
-          .from('usuarios')
-          .update({ medida_cm: medidaCm })
-          .eq('id', userId);
-      }
+      // Opcional: puedes actualizar aquí en tu BD como antes
+      // await supabase...
     }
   </script>
 </body>
