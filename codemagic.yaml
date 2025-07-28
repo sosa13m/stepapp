@@ -3,11 +3,13 @@ workflows:
     name: Build Android APK
     environment:
       node: 20.11.1
+      java: 17      # forzar Java 17 para evitar errores con Gradle/Android
     scripts:
       - npm install -g @capacitor/cli
       - npm install
       - npx cap sync
       - npx cap copy android
+      - cd android && ./gradlew clean   # limpiar build viejo antes de compilar
       - cd android && ./gradlew assembleDebug
     artifacts:
       - android/app/build/outputs/**/*.apk
@@ -20,6 +22,7 @@ workflows:
     name: Build iOS IPA
     environment:
       node: 20.11.1
+      xcode: 15.0 
     scripts:
       - npm install -g @capacitor/cli
       - npm install
