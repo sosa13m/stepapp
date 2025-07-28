@@ -2,61 +2,70 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Calibración - StepApp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
       padding: 0;
       background-color: #000;
+      font-family: system-ui, sans-serif;
     }
     .container-calibracion {
       max-width: 400px;
       margin: 20px auto;
       background: #fff;
       border-radius: 20px;
-      overflow: hidden;
       padding: 15px;
+      position: relative;
+      overflow: hidden;
     }
     #video {
       width: 100%;
       height: auto;
       border-radius: 20px;
+      object-fit: cover;
+      aspect-ratio: 3/4;
     }
     #canvas-foto, #grid-canvas {
       position: absolute;
-      top: 0;
+      top: 60px;
       left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
+      width: 100%;
+      height: auto;
+      z-index: 2;
+      display: none;
     }
     #canvas-foto {
-      display: none;
+      z-index: 3;
       pointer-events: auto;
+    }
+    #grid-canvas {
+      z-index: 2;
+      pointer-events: none;
     }
     .botones {
       display: flex;
-      justify-content: space-around;
-      margin-top: 15px;
+      justify-content: space-between;
+      margin-top: 10px;
     }
     .btn {
       flex: 1;
-      margin: 5px;
+      margin: 4px;
     }
     #medida-cm {
       text-align: center;
       font-weight: bold;
-      margin-top: 10px;
       font-size: 18px;
       color: #458500;
+      margin-top: 10px;
     }
     .instrucciones {
-      text-align: center;
       font-size: 14px;
-      margin-bottom: 10px;
+      text-align: center;
+      margin-bottom: 8px;
       color: #333;
     }
   </style>
@@ -64,7 +73,7 @@
 <body>
   <div class="container-calibracion animate__animated animate__fadeIn">
     <h4 class="text-center text-primary animate__animated animate__fadeInRight">Calibración del Pie</h4>
-    <p class="instrucciones">Ubica tu pie a unos 50-70 cm de la cámara, con buena iluminación. Asegúrate de marcar bien el talón y el dedo pulgar.</p>
+    <p class="instrucciones">Ubica tu pie a unos 50–70 cm de la cámara, con buena luz. Marca el talón y el dedo pulgar.</p>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas-foto"></canvas>
     <canvas id="grid-canvas"></canvas>
@@ -77,15 +86,15 @@
   </div>
 
   <script>
-    const video = document.getElementById('video');
-    const canvasFoto = document.getElementById('canvas-foto');
-    const ctx = canvasFoto.getContext('2d');
-    const gridCanvas = document.getElementById('grid-canvas');
-    const gridCtx = gridCanvas.getContext('2d');
-    const medidaText = document.getElementById('medida-cm');
-    const btnCapturar = document.getElementById('btn-capturar');
-    const btnUsar = document.getElementById('btn-usar');
-    const btnRepetir = document.getElementById('btn-repetir');
+    const video = document.getElementById("video");
+    const canvasFoto = document.getElementById("canvas-foto");
+    const ctx = canvasFoto.getContext("2d");
+    const gridCanvas = document.getElementById("grid-canvas");
+    const gridCtx = gridCanvas.getContext("2d");
+    const medidaText = document.getElementById("medida-cm");
+    const btnCapturar = document.getElementById("btn-capturar");
+    const btnUsar = document.getElementById("btn-usar");
+    const btnRepetir = document.getElementById("btn-repetir");
 
     let puntos = [];
     let imgActual = null;
@@ -93,40 +102,36 @@
 
     async function iniciarCamara() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
         video.srcObject = stream;
       } catch (e) {
-        alert("No se pudo acceder a la cámara.");
+        alert("Error al acceder a la cámara.");
       }
     }
 
-    iniciarCamara();
-
     function dibujarCuadricula() {
-      gridCanvas.width = window.innerWidth;
-      gridCanvas.height = window.innerHeight;
+      gridCanvas.width = video.clientWidth;
+      gridCanvas.height = video.clientHeight;
       gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
-      gridCtx.strokeStyle = 'rgba(0,255,0,0.3)';
-      gridCtx.lineWidth = 1;
-
+      gridCtx.strokeStyle = "rgba(0,255,0,0.3)";
       const terciosX = gridCanvas.width / 3;
       const terciosY = gridCanvas.height / 3;
-
       for (let i = 1; i < 3; i++) {
         gridCtx.beginPath();
         gridCtx.moveTo(terciosX * i, 0);
         gridCtx.lineTo(terciosX * i, gridCanvas.height);
         gridCtx.stroke();
-
         gridCtx.beginPath();
         gridCtx.moveTo(0, terciosY * i);
         gridCtx.lineTo(gridCanvas.width, terciosY * i);
         gridCtx.stroke();
       }
-
       requestAnimationFrame(dibujarCuadricula);
     }
 
+    iniciarCamara();
     dibujarCuadricula();
 
     btnCapturar.onclick = () => {
@@ -135,14 +140,13 @@
       imageCapture.takePhoto().then(blob => {
         const img = new Image();
         img.onload = () => {
-          video.style.display = 'none';
-          canvasFoto.style.display = 'block';
-          btnCapturar.style.display = 'none';
-          btnUsar.style.display = 'inline-block';
-          btnRepetir.style.display = 'inline-block';
-
-          canvasFoto.width = window.innerWidth;
-          canvasFoto.height = window.innerHeight;
+          canvasFoto.style.display = "block";
+          video.style.display = "none";
+          btnCapturar.style.display = "none";
+          btnUsar.style.display = "inline-block";
+          btnRepetir.style.display = "inline-block";
+          canvasFoto.width = video.clientWidth;
+          canvasFoto.height = video.clientHeight;
           ctx.drawImage(img, 0, 0, canvasFoto.width, canvasFoto.height);
           imgActual = img;
           puntos = [];
@@ -155,60 +159,54 @@
     function actualizarCanvas() {
       ctx.clearRect(0, 0, canvasFoto.width, canvasFoto.height);
       ctx.drawImage(imgActual, 0, 0, canvasFoto.width, canvasFoto.height);
-
       puntos.forEach((p, i) => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = '#00f';
+        ctx.fillStyle = "#00f";
         ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.fillText(i + 1, p.x + 10, p.y - 10);
+        ctx.fillStyle = "#000";
+        ctx.fillText(i + 1, p.x + 12, p.y - 12);
       });
-
       if (puntos.length === 2) {
-        ctx.strokeStyle = '#0f0';
-        ctx.beginPath();
-        ctx.moveTo(puntos[0].x, puntos[0].y);
-        ctx.lineTo(puntos[1].x, puntos[1].y);
-        ctx.stroke();
-
-        const dist = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-        const largo = (dist * 0.1).toFixed(1);
+        const d = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+        const largo = (d * 0.1).toFixed(1);
         medidaText.innerText = `Largo: ${largo} cm`;
+      } else {
+        medidaText.innerText = `Largo: 0.0 cm`;
       }
     }
 
-    canvasFoto.addEventListener('touchstart', e => {
-      const touch = e.touches[0];
+    canvasFoto.addEventListener("touchstart", (e) => {
       const rect = canvasFoto.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
+      const x = e.touches[0].clientX - rect.left;
+      const y = e.touches[0].clientY - rect.top;
       const idx = puntos.findIndex(p => Math.hypot(p.x - x, p.y - y) < 20);
-      if (idx !== -1) {
-        dragging = idx;
-      } else if (puntos.length < 2) {
+      if (idx >= 0) dragging = idx;
+      else if (puntos.length < 2) {
         puntos.push({ x, y });
         actualizarCanvas();
       }
     });
 
-    canvasFoto.addEventListener('touchmove', e => {
+    canvasFoto.addEventListener("touchmove", (e) => {
       if (dragging !== null) {
-        const touch = e.touches[0];
         const rect = canvasFoto.getBoundingClientRect();
-        puntos[dragging] = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+        puntos[dragging] = {
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
+        };
         actualizarCanvas();
       }
     });
 
-    canvasFoto.addEventListener('touchend', () => {
+    canvasFoto.addEventListener("touchend", () => {
       dragging = null;
     });
 
     btnUsar.onclick = () => {
       if (puntos.length !== 2) return alert("Debes marcar dos puntos.");
-      const dist = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-      const largo = (dist * 0.1).toFixed(1);
+      const d = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+      const largo = (d * 0.1).toFixed(1);
       localStorage.setItem("medida_cm", largo);
       window.location.href = "foto-receta.html";
     };
