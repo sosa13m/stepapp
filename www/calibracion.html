@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Calibración - StepApp</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="stylesheet" href="style.css" />
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background: #0fd2d2;
+      background: linear-gradient(135deg, #0fd2d2 60%, #2ecc71 100%);
       min-height: 100vh;
       font-family: 'Segoe UI', sans-serif;
     }
@@ -17,58 +18,64 @@
       background: #fff;
       border-radius: 24px;
       margin: 0 auto;
-      padding: 16px;
-      max-width: 480px;
-      min-height: 90vh;
+      margin-top: 18px;
+      padding: 12px 8px 20px 8px;
+      max-width: 440px;
+      min-height: 93vh;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
-      box-shadow: 0 0 20px rgba(44,205,224,0.08);
+      box-shadow: 0 0 20px rgba(44,205,224,0.12);
     }
     .indicaciones {
       color: #1a535c;
-      font-size: 14px;
-      margin-bottom: 10px;
+      font-size: 15px;
+      margin-bottom: 12px;
       text-align: center;
       font-weight: 500;
       padding: 0 10px;
     }
     #img-container {
-      position: relative;
       width: 100%;
       max-width: 360px;
       min-height: 260px;
-      margin: 0 auto;
+      margin: 0 auto 18px auto;
+      position: relative;
+      border-radius: 15px;
       background: #222;
-      border-radius: 14px;
       overflow: hidden;
     }
     #imagenPreview {
       width: 100%;
+      border-radius: 14px;
       display: none;
-      border-radius: 12px;
+      background: #111;
     }
     #canvas {
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100%;
       height: 100%;
       display: none;
       pointer-events: none;
     }
     #resultado {
-      color: #222;
+      color: #444;
       font-weight: bold;
-      margin-top: 14px;
-      font-size: 18px;
+      margin: 0 0 0.6em 0;
+      font-size: 17px;
+      text-align: center;
+      min-height: 28px;
+      width: 100%;
+      background: rgba(255,255,255,0.88);
+      border-radius: 12px;
     }
     .btn {
       margin: 10px 4px 0 4px;
       background-color: #2a9d8f;
       color: #fff;
-      padding: 12px 24px;
+      padding: 13px 25px;
       border: none;
       border-radius: 12px;
       font-size: 17px;
@@ -77,15 +84,15 @@
     }
     .btn:active {transform: scale(0.96);}
     #btnsContainer {
-      margin-top: 22px;
+      margin-top: 18px;
       width: 100%;
       display: flex;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
     }
-    @media (max-width: 500px) {
-      .contenedor {max-width: 98vw; min-height: 99vh;}
-      #img-container {max-width: 97vw;}
+    @media (max-width: 520px) {
+      .contenedor {max-width: 99vw; min-height: 99vh;}
+      #img-container {max-width: 98vw;}
     }
   </style>
 </head>
@@ -97,7 +104,7 @@
     </div>
     <div id="img-container">
       <input type="file" accept="image/*" capture="environment" id="inputCamara"
-        style="position:absolute;top:40%;left:0;right:0;margin:auto;width:100%;height:40px;opacity:0.01;z-index:3;display:block;cursor:pointer;">
+        style="position:absolute;top:35%;left:0;width:100%;height:60px;opacity:0.01;z-index:3;display:block;cursor:pointer;">
       <img id="imagenPreview" />
       <canvas id="canvas"></canvas>
     </div>
@@ -120,12 +127,14 @@
     const btnUsar = document.getElementById('btnUsar');
 
     let puntos = [];
+    let draggingIndex = -1;
     let imgNaturalWidth = 0;
     let imgNaturalHeight = 0;
 
-    // Para calibrar la conversión de pixel a cm, ajusta este valor:
-    const CM_POR_PIXEL = 0.0265; // (prueba en tu dispositivo real)
+    // FACTOR DE CONVERSIÓN: prueba con 0.0265, ajústalo según tu teléfono (cm/pixel)
+    const CM_POR_PIXEL = 0.0265;
 
+    // Abrir cámara y mostrar imagen
     input.addEventListener('change', (event) => {
       const file = event.target.files[0];
       if (!file) return;
@@ -133,21 +142,20 @@
       tempImg.onload = () => {
         imgNaturalWidth = tempImg.naturalWidth;
         imgNaturalHeight = tempImg.naturalHeight;
-
         img.src = tempImg.src;
         img.style.display = 'block';
-        canvas.style.display = 'block';
-
-        // Sincroniza tamaño canvas-imagen visual (mantén proporción)
+        // Oculta el input y muestra el canvas ocupando el mismo espacio de la imagen
         setTimeout(() => {
-          const w = img.clientWidth, h = img.clientHeight;
-          canvas.width = w; canvas.height = h;
-          dibujar(); // inicializa limpio
-        }, 20);
-
-        // Oculta input
-        input.style.display = "none";
-        btnsContainer.style.display = "flex";
+          canvas.width = img.clientWidth;
+          canvas.height = img.clientHeight;
+          canvas.style.display = 'block';
+          canvas.style.pointerEvents = 'auto';
+          input.style.display = "none";
+          btnsContainer.style.display = "flex";
+          puntos = [];
+          resultado.textContent = "Marca el talón y luego el dedo pulgar tocando la imagen";
+          dibujar();
+        }, 40);
       };
       tempImg.src = URL.createObjectURL(file);
     });
@@ -179,21 +187,19 @@
       }
     }
 
-    // Selección y movimiento de puntos
-    let draggingIndex = -1;
+    // Colocar o mover puntos con touch/mouse
     canvas.addEventListener('pointerdown', e => {
+      if (!imgNaturalWidth) return;
       const rect = canvas.getBoundingClientRect();
       const x = (e.clientX - rect.left) * (canvas.width / rect.width);
       const y = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-      // Si toca cerca de punto existente, moverlo
       for (let i = 0; i < puntos.length; i++) {
-        if (Math.hypot(puntos[i].x - x, puntos[i].y - y) < 25) {
+        if (Math.hypot(puntos[i].x - x, puntos[i].y - y) < 24) {
           draggingIndex = i;
           return;
         }
       }
-      // Si menos de 2, crear punto
       if (puntos.length < 2) {
         puntos.push({ x, y });
         dibujar();
@@ -212,19 +218,16 @@
     canvas.addEventListener('pointercancel', () => draggingIndex = -1);
 
     function mostrarLargo() {
+      // Calcula la distancia en píxeles reales
       const dx = puntos[1].x - puntos[0].x;
       const dy = puntos[1].y - puntos[0].y;
-      const dPix = Math.hypot(dx, dy);
-
-      // Conversión a pixeles nativos de la imagen:
       const ratioW = imgNaturalWidth / img.clientWidth;
       const ratioH = imgNaturalHeight / img.clientHeight;
       const dPxReal = Math.hypot(
-        (puntos[1].x - puntos[0].x) * ratioW,
-        (puntos[1].y - puntos[0].y) * ratioH
+        dx * ratioW,
+        dy * ratioH
       );
       const medidaCm = (dPxReal * CM_POR_PIXEL).toFixed(1);
-
       resultado.textContent = `Largo: ${medidaCm} cm`;
       resultado.style.display = "block";
       localStorage.setItem('medida_cm', medidaCm);
@@ -247,9 +250,24 @@
       else alert('Marca primero dos puntos sobre la imagen.');
     };
 
+    // Guardar la medida en la base de datos Supabase
     async function guardarEnSupabase(medidaCm) {
-      // Opcional: puedes actualizar aquí en tu BD como antes
-      // await supabase...
+      try {
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('id')
+          .order('id', { ascending: false })
+          .limit(1);
+        const userId = data?.[0]?.id;
+        if (userId) {
+          await supabase
+            .from('usuarios')
+            .update({ medida_cm: medidaCm })
+            .eq('id', userId);
+        }
+      } catch (err) {
+        // No detengas el flujo si hay error
+      }
     }
   </script>
 </body>
