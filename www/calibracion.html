@@ -132,7 +132,7 @@
     let imgNaturalHeight = 0;
 
     // FACTOR DE CONVERSIÓN: prueba con 0.0265, ajústalo según tu teléfono (cm/pixel)
-    const CM_POR_PIXEL = 0.0265;
+    const CM_POR_PIXEL = 0.02;
 
     // Abrir cámara y mostrar imagen
     input.addEventListener('change', (event) => {
@@ -161,31 +161,33 @@
     });
 
     function dibujar() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Dibuja los puntos
-      puntos.forEach((p, i) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 16, 0, 2 * Math.PI);
-        ctx.fillStyle = "#00E676";
-        ctx.fill();
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 3;
-        ctx.stroke();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Puntos pequeños, blancos, borde gris claro, sin sombra
+    puntos.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, 2 * Math.PI);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(80,80,80,0.23)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-        ctx.font = "bold 19px Segoe UI";
-        ctx.fillStyle = "#111";
-        ctx.fillText(i + 1, p.x - 8, p.y + 6);
-      });
-      // Dibuja la línea si hay 2 puntos
-      if (puntos.length === 2) {
-        ctx.beginPath();
-        ctx.moveTo(puntos[0].x, puntos[0].y);
-        ctx.lineTo(puntos[1].x, puntos[1].y);
-        ctx.strokeStyle = "#1976d2";
-        ctx.lineWidth = 5;
-        ctx.stroke();
-      }
+      // Opcional: números pequeños y grises, o elimina esta parte si no quieres número
+      ctx.font = "bold 12px Segoe UI";
+      ctx.fillStyle = "#aaa";
+      ctx.fillText(i + 1, p.x - 4, p.y + 4);
+    });
+    // Línea blanca y fina
+    if (puntos.length === 2) {
+      ctx.beginPath();
+      ctx.moveTo(puntos[0].x, puntos[0].y);
+      ctx.lineTo(puntos[1].x, puntos[1].y);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
     }
+  }
+
 
     // Colocar o mover puntos con touch/mouse
     canvas.addEventListener('pointerdown', e => {
