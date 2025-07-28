@@ -7,11 +7,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <link rel="stylesheet" href="style.css" />
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       background-color: #000;
-      height: 100vh;
       overflow: hidden;
       font-family: 'Segoe UI', sans-serif;
     }
@@ -26,32 +25,24 @@
       justify-content: center;
       align-items: center;
     }
-    .oculto {
-      display: none !important;
+    #imagen-capturada {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      background-color: #000;
     }
     #canvas {
-      display: none;
       position: absolute;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 10;
-      touch-action: none;
-    }
-    #resultado {
-      position: absolute;
-      top: 12px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      color: #fff;
-      font-weight: bold;
-      font-size: 18px;
-      z-index: 20;
+      z-index: 11;
+      pointer-events: auto;
     }
     .btn {
-      margin-top: 12px;
       background-color: #2a9d8f;
       color: #fff;
       padding: 12px 24px;
@@ -59,7 +50,7 @@
       border-radius: 10px;
       font-size: 16px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      z-index: 5;
+      margin-top: 15px;
     }
     .btn:active {
       transform: scale(0.97);
@@ -71,136 +62,130 @@
       text-align: center;
       padding: 0 10px;
     }
+    #resultado {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      background: rgba(0,0,0,0.5);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 12;
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div class="contenedor animate__animated animate__fadeInRight" id="cuadro">
+  <div class="contenedor animate__animated animate__fadeInRight" id="contenedor-principal">
     <p class="indicaciones">
-      Coloca el pie a 50-70 cm de la cámara (altura de la rodilla aprox.). Asegúrate de buena iluminación. Marca el talón y el dedo pulgar con precisión.
+      Coloca el pie a unos 50-70 cm de la cámara (ligeramente por encima de la rodilla). Asegúrate de tener buena iluminación y enfocar el talón y el dedo pulgar.
     </p>
-
     <input type="file" accept="image/*" capture="environment" id="inputCamara" style="display:none" />
     <button class="btn" onclick="document.getElementById('inputCamara').click()">Abrir cámara</button>
   </div>
 
+  <img id="imagen-capturada" />
   <canvas id="canvas" width="0" height="0"></canvas>
   <div id="resultado"></div>
-  <button id="btnContinuar" class="btn oculto" onclick="continuar()">Usar esta medida</button>
+  <button id="btnUsar" class="btn" style="display:none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 12;" onclick="usarMedida()">Usar esta medida</button>
 
   <script src="js/supabase-config.js"></script>
   <script>
     const input = document.getElementById('inputCamara');
+    const imagen = document.getElementById('imagen-capturada');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const resultado = document.getElementById('resultado');
-    const btnContinuar = document.getElementById('btnContinuar');
-    const cuadro = document.getElementById('cuadro');
+    const btnUsar = document.getElementById('btnUsar');
+    const contenedor = document.getElementById('contenedor-principal');
 
     let puntos = [];
-    let draggingIndex = -1;
-    let img = new Image();
 
-    input.addEventListener('change', (event) => {
-      const file = event.target.files[0];
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
       if (!file) return;
 
-      cuadro.classList.add('animate__fadeOut'); // animación salida
-      setTimeout(() => cuadro.style.display = 'none', 400); // esconder cuadro blanco
-
+      const img = new Image();
       img.onload = () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.style.display = 'block';
-        canvas.style.pointerEvents = 'auto';
-        resultado.innerText = "Toca dos puntos sobre la imagen (talón y dedo)";
+        contenedor.style.display = 'none';
+        imagen.src = img.src;
+        imagen.style.display = 'block';
+
+        imagen.onload = () => {
+          canvas.width = imagen.clientWidth;
+          canvas.height = imagen.clientHeight;
+          canvas.style.display = 'block';
+          canvas.style.pointerEvents = 'auto';
+          resultado.style.display = 'block';
+        };
       };
       img.src = URL.createObjectURL(file);
     });
 
+    canvas.addEventListener('click', (e) => {
+      if (puntos.length >= 2) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      puntos.push({ x, y });
+      dibujar();
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (puntos.length >= 2) return;
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      puntos.push({ x, y });
+      dibujar();
+    });
+
     function dibujar() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      puntos.forEach((p, i) => {
+      ctx.drawImage(imagen, 0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'red';
+      puntos.forEach(p => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-        ctx.fillStyle = i === draggingIndex ? 'blue' : 'red';
         ctx.fill();
-
-        ctx.fillStyle = '#000';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillText(i + 1, p.x + 10, p.y - 10);
       });
 
       if (puntos.length === 2) {
-        ctx.strokeStyle = '#00aa00';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'lime';
         ctx.beginPath();
         ctx.moveTo(puntos[0].x, puntos[0].y);
         ctx.lineTo(puntos[1].x, puntos[1].y);
         ctx.stroke();
 
         const d = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-        const medidaCm = (d * 0.05).toFixed(1); // Puedes ajustar este factor si tienes patrón de calibración
+        const medidaCm = (d * 0.05).toFixed(1); // Ajustable según distancia y DPI
         resultado.innerText = `Largo: ${medidaCm} cm`;
         localStorage.setItem('medida_cm', medidaCm);
         guardarEnSupabase(medidaCm);
-        btnContinuar.classList.remove('oculto');
+        btnUsar.style.display = 'block';
       }
     }
 
-    canvas.addEventListener('mousedown', iniciarDrag);
-    canvas.addEventListener('touchstart', iniciarDrag, { passive: false });
-
-    canvas.addEventListener('mousemove', moverDrag);
-    canvas.addEventListener('touchmove', moverDrag, { passive: false });
-
-    canvas.addEventListener('mouseup', terminarDrag);
-    canvas.addEventListener('touchend', terminarDrag);
-
-    function getCoord(e) {
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-      return { x, y };
-    }
-
-    function iniciarDrag(e) {
-      const { x, y } = getCoord(e);
-      const idx = puntos.findIndex(p => Math.hypot(p.x - x, p.y - y) < 15);
-      if (idx >= 0) {
-        draggingIndex = idx;
-      } else if (puntos.length < 2) {
-        puntos.push({ x, y });
-        dibujar();
-      }
-    }
-
-    function moverDrag(e) {
-      if (draggingIndex >= 0) {
-        e.preventDefault();
-        const { x, y } = getCoord(e);
-        puntos[draggingIndex].x = x;
-        puntos[draggingIndex].y = y;
-        dibujar();
-      }
-    }
-
-    function terminarDrag() {
-      draggingIndex = -1;
-    }
-
-    function continuar() {
+    function usarMedida() {
       window.location.href = 'foto-receta.html';
     }
 
     async function guardarEnSupabase(medidaCm) {
-      const { data } = await supabase.from('usuarios').select('id').order('id', { ascending: false }).limit(1);
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
       const userId = data?.[0]?.id;
       if (userId) {
-        await supabase.from('usuarios').update({ medida_cm: medidaCm }).eq('id', userId);
+        await supabase
+          .from('usuarios')
+          .update({ medida_cm: medidaCm })
+          .eq('id', userId);
       }
     }
   </script>
