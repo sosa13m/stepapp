@@ -9,8 +9,7 @@ workflows:
       - npm install
       - npx cap sync
       - npx cap copy android
-      # Reemplaza cualquier 21 por 17 en TODOS los gradle
-      - find . -name "*.gradle" -type f -exec sed -i 's/21/17/g' {} +
+      - find . -name "*.gradle" -type f -exec sed -i '' 's/21/17/g' {} +
       - cd android && ./gradlew assembleDebug
     artifacts:
       - android/app/build/outputs/**/*.apk
