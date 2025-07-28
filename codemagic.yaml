@@ -1,11 +1,8 @@
 workflows:
-  capacitor-android:
+  build-android:
     name: Build Android APK
-    max_build_duration: 60
     environment:
-      vars:
-        PACKAGE_NAME: "com.stepapp.app"
-      node: 18.16.0
+      node: 20.11.1
     scripts:
       - npm install -g @capacitor/cli
       - npm install
@@ -17,25 +14,20 @@ workflows:
     publishing:
       email:
         recipients:
-          - tu-correo@gmail.com
+          - astorstepapp@gmail.com
 
-  capacitor-ios:
+  build-ios:
     name: Build iOS IPA
-    max_build_duration: 60
     environment:
-      vars:
-        PACKAGE_NAME: "com.stepapp.app"
-      node: 18.16.0
+      node: 20.11.1
     scripts:
       - npm install -g @capacitor/cli
       - npm install
       - npx cap sync
       - npx cap copy ios
-      - cd ios && pod install
-      - cd ..
+      - cd ios && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos
     artifacts:
-      - ios/App/App.xcarchive
-      - ios/App/build/**/*.ipa
+      - ios/build/**/*.ipa
     publishing:
       email:
         recipients:
