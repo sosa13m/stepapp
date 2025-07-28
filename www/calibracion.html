@@ -2,146 +2,145 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calibración - StepApp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <link rel="stylesheet" href="style.css" />
   <style>
-    body {
+    body, html {
       margin: 0;
-      background-color: #e7fff2;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 0;
+      background-color: #000;
       height: 100vh;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
     }
-
-    .calibracion-container {
-      background: white;
-      border-radius: 20px;
-      padding: 20px;
+    .contenedor {
+      background: #fff;
+      border-radius: 24px;
+      margin: 10px;
+      padding: 10px;
+      height: calc(100vh - 20px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #video {
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
-      position: relative;
+      height: auto;
+      border-radius: 12px;
     }
-
-    video, canvas {
-      width: 100%;
-      border-radius: 20px;
-    }
-
-    #canvas-foto {
+    #canvas {
       position: absolute;
       top: 0;
       left: 0;
-      display: none;
-      border-radius: 20px;
+      pointer-events: none;
     }
-
-    #medida-cm {
-      text-align: center;
-      margin-top: 10px;
+    #resultado {
+      color: #333;
       font-weight: bold;
+      margin-top: 10px;
       font-size: 18px;
-      color: #0a8754;
     }
-
-    .botones {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 15px;
-    }
-
     .btn {
-      width: 48%;
+      margin-top: 15px;
+      background-color: #2a9d8f;
+      color: #fff;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .indicaciones {
+      color: #555;
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-align: center;
+      padding: 0 10px;
     }
   </style>
 </head>
 <body>
-  <div class="calibracion-container animate__animated animate__fadeInRight">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas-foto"></canvas>
-    <div id="medida-cm">Largo: 0.0 cm</div>
-    <div class="botones">
-      <button id="btn-capturar" class="btn btn-primary">Capturar</button>
-      <button id="btn-usar" class="btn btn-success" style="display:none;">Usar</button>
-    </div>
+  <div class="contenedor animate__animated animate__fadeInRight">
+    <p class="indicaciones">
+      Coloca el pie a 50-70 cm de la cámara (altura de la rodilla aprox.). Asegúrate de buena iluminación. Marca el talón y el dedo pulgar con precisión.
+    </p>
+
+    <input type="file" accept="image/*" capture="environment" id="inputCamara" style="display:none" />
+    <button class="btn" onclick="document.getElementById('inputCamara').click()">Abrir cámara</button>
+    <canvas id="canvas" width="0" height="0"></canvas>
+    <div id="resultado"></div>
+    <button id="btnContinuar" class="btn" style="display:none;" onclick="continuar()">Usar esta medida</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="js/supabase-config.js"></script>
   <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas-foto');
+    const input = document.getElementById('inputCamara');
+    const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const btnCapturar = document.getElementById('btn-capturar');
-    const btnUsar = document.getElementById('btn-usar');
-    const medidaText = document.getElementById('medida-cm');
-
+    const resultado = document.getElementById('resultado');
+    const btnContinuar = document.getElementById('btnContinuar');
     let puntos = [];
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => {
-        video.srcObject = stream;
-      })
-      .catch(err => alert('Error al acceder a la cámara: ' + err.message));
-
-    btnCapturar.addEventListener('click', () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.style.display = 'block';
-      video.style.display = 'none';
-      btnCapturar.style.display = 'none';
-      btnUsar.style.display = 'block';
+    input.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        canvas.style.display = 'block';
+        canvas.style.pointerEvents = 'auto';
+        resultado.innerText = "Toca dos puntos sobre la imagen (talón y dedo)";
+      };
+      img.src = URL.createObjectURL(file);
     });
 
     canvas.addEventListener('click', (e) => {
+      if (puntos.length >= 2) return;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      if (puntos.length < 2) {
-        puntos.push({ x, y });
-        dibujarPuntos();
+      puntos.push({ x, y });
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = 'red';
+      ctx.fill();
+      if (puntos.length === 2) {
+        const d = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
+        const medidaCm = (d * 0.05).toFixed(1);
+        resultado.innerText = `Largo: ${medidaCm} cm`;
+        localStorage.setItem('medida_cm', medidaCm);
+        guardarEnSupabase(medidaCm);
+        btnContinuar.style.display = 'block';
       }
     });
 
-    function dibujarPuntos() {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "red";
-      ctx.strokeStyle = "#0f0";
-      ctx.lineWidth = 2;
-
-      puntos.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      if (puntos.length === 2) {
-        ctx.beginPath();
-        ctx.moveTo(puntos[0].x, puntos[0].y);
-        ctx.lineTo(puntos[1].x, puntos[1].y);
-        ctx.stroke();
-
-        const dist = Math.hypot(puntos[1].x - puntos[0].x, puntos[1].y - puntos[0].y);
-        const factor = 0.026; // ajusta según pruebas reales
-        const cm = (dist * factor).toFixed(1);
-        medidaText.innerText = `Largo: ${cm} cm`;
-        localStorage.setItem('medida_cm', cm);
-      }
+    function continuar() {
+      window.location.href = 'foto-receta.html';
     }
 
-    btnUsar.addEventListener('click', () => {
-      if (localStorage.getItem('medida_cm')) {
-        window.location.href = 'foto-receta.html';
-      } else {
-        alert("Por favor marca dos puntos para medir.");
+    async function guardarEnSupabase(medidaCm) {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
+      const userId = data?.[0]?.id;
+      if (userId) {
+        await supabase
+          .from('usuarios')
+          .update({ medida_cm: medidaCm })
+          .eq('id', userId);
       }
-    });
+    }
   </script>
 </body>
 </html>
