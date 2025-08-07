@@ -5,44 +5,50 @@ const captureBtn = document.getElementById("capture-btn");
 const cameraContainer = document.getElementById("camera-container");
 const estadoDistancia = document.getElementById("estado-distancia");
 
-let stream = null;
+let intervalo = null;
 
 async function iniciarCamara() {
-  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-  video.srcObject = stream;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = stream;
+
+    video.onloadedmetadata = () => {
+      video.play();
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      if (intervalo) clearInterval(intervalo);
+      intervalo = setInterval(detectarDistancia, 1000);
+    };
+  } catch (error) {
+    console.error("No se pudo acceder a la cámara:", error);
+    alert("No se pudo acceder a la cámara");
+  }
 }
 
-function estimarDistancia() {
+function detectarDistancia() {
+  if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  const pieAproxPx = canvas.height * 0.35;
+  // Simula la detección de un pie ocupando un % del alto del video
+  const alturaCanvas = canvas.height;
 
-  if (pieAproxPx >= 120 && pieAproxPx <= 200) {
+  // Supón que si el pie ocupa entre el 35% y el 50% del alto es buena distancia
+  const tamañoAproxDelPie = alturaCanvas * 0.4;
+
+  if (tamañoAproxDelPie >= 120 && tamañoAproxDelPie <= 200) {
     cameraContainer.style.borderColor = "green";
     estadoDistancia.textContent = "Distancia correcta";
     captureBtn.disabled = false;
   } else {
     cameraContainer.style.borderColor = "red";
-    estadoDistancia.textContent = "Mueve la cámara a una distancia correcta";
+    estadoDistancia.textContent = "Acércate o aléjate un poco";
     captureBtn.disabled = true;
   }
 }
-
-captureBtn.addEventListener("click", () => {
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imgData = canvas.toDataURL("image/png");
-
-  const medida = (Math.random() * (28 - 22) + 22).toFixed(1); // Lógica de puntos va aquí
-  localStorage.setItem("medida_calculada", medida);
-
-  alert("Medida estimada: " + medida + " cm");
-  window.location.href = "foto-receta.html";
-});
-
-video.addEventListener("loadeddata", () => {
-  setInterval(estimarDistancia, 1000);
-});
 
 iniciarCamara();
