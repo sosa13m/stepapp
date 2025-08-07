@@ -19,6 +19,9 @@ async function iniciarCamara() {
   return new Promise(resolve => {
     video.onloadedmetadata = () => {
       video.play();
+      // Ajustar canvas al tamaño del video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       resolve();
     };
   });
@@ -35,7 +38,7 @@ async function cargarBodyPix() {
 }
 
 async function analizarFrame() {
-  if (modoMedicion) return; // detener IA al entrar a modo puntos
+  if (modoMedicion) return;
 
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
@@ -82,7 +85,6 @@ async function loopDeteccion() {
 }
 
 captureBtn.addEventListener("click", () => {
-  // Detener IA
   modoMedicion = true;
   video.style.display = "none";
   canvas.classList.remove("d-none");
@@ -98,8 +100,11 @@ function onCanvasClick(e) {
   if (puntos.length >= 2) return;
 
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
 
   puntos.push({ x, y });
 
@@ -113,7 +118,7 @@ function onCanvasClick(e) {
     const dy = puntos[1].y - puntos[0].y;
     const distanciaPx = Math.sqrt(dx * dx + dy * dy);
 
-    const pixelesPorCm = 33.5; // valor calibrado (puedes ajustar)
+    const pixelesPorCm = 20.5; // ajustado según tu medida real
     const medidaCm = (distanciaPx / pixelesPorCm).toFixed(1);
 
     localStorage.setItem("medida_calculada", medidaCm);
