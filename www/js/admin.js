@@ -32,12 +32,11 @@ async function cargarPedidos() {
         <button class="btn btn-success btn-confirmar" ${p.confirmado ? 'disabled' : ''}>Confirmar</button>
       </td>
       <td>
-        <button class="btn btn-primary btn-terminar">Terminado</button>
+        <button class="btn btn-primary btn-terminar" ${p.estado === 'listo' ? 'disabled' : ''}>Terminar</button>
       </td>
     `;
     tablaPedidos.appendChild(fila);
 
-    // Agregar eventos dinámicos
     const btnConfirmar = fila.querySelector('.btn-confirmar');
     const btnTerminar = fila.querySelector('.btn-terminar');
     const estadoCell = fila.querySelector('.estado-pedido');
@@ -88,6 +87,7 @@ async function cargarPedidos() {
           email: p.correo
         });
         estadoCell.textContent = 'listo';
+        btnTerminar.disabled = true;
         alert('Pedido marcado como listo y correo enviado.');
       } catch (err) {
         console.error('Error al enviar correo final:', err);
@@ -95,4 +95,37 @@ async function cargarPedidos() {
       }
     });
   });
+
+  // Evento exportar
+  const btnExportar = document.getElementById("btn-exportar");
+  if (btnExportar) {
+    btnExportar.onclick = () => exportarCSV(data);
+  }
 }
+
+function exportarCSV(pedidos) {
+  const encabezados = ["Código", "Nombre", "Correo", "Medida (cm)", "Estado", "Receta"];
+  const filas = pedidos.map(p => [
+    p.codigo_pedido,
+    p.nombre,
+    p.correo,
+    p.medida_cm || "",
+    p.estado || (p.confirmado ? "confirmado" : "pendiente"),
+    p.receta_url || ""
+  ]);
+
+  const csvContent = [encabezados, ...filas]
+    .map(row => row.map(valor => `"${valor}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "pedidos_stepapp.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+cargarPedidos();
