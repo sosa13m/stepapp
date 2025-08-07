@@ -16,9 +16,20 @@ async function cargarPedidos() {
   }
 
   tablaPedidos.innerHTML = '';
+
   data.forEach(p => {
     const fila = document.createElement('tr');
-    const estadoActual = p.estado || (p.confirmado ? 'confirmado' : 'pendiente');
+
+    let estadoActual = "pendiente";
+    let estadoColor = "text-dark";
+
+    if (p.estado === "listo") {
+      estadoActual = "listo";
+      estadoColor = "text-primary fw-bold";
+    } else if (p.estado === "confirmado" || p.confirmado) {
+      estadoActual = "confirmado";
+      estadoColor = "text-success fw-bold";
+    }
 
     fila.innerHTML = `
       <td>${p.codigo_pedido}</td>
@@ -26,15 +37,15 @@ async function cargarPedidos() {
       <td>${p.correo}</td>
       <td>${p.medida_cm || '—'}</td>
       <td>${p.receta_url ? `<a class="receta-link" href="${p.receta_url}" target="_blank">Ver</a>` : '—'}</td>
-      <td class="estado-pedido">${estadoActual}</td>
-      <td><button class="btn btn-success btn-confirmar" ${p.confirmado ? 'disabled' : ''}>Confirmar</button></td>
+      <td class="estado-pedido ${estadoColor}">${estadoActual}</td>
+      <td><button class="btn btn-success btn-confirmar" ${estadoActual !== 'pendiente' ? 'disabled' : ''}>Confirmar</button></td>
       <td><button class="btn btn-primary btn-terminar" ${estadoActual === 'listo' ? 'disabled' : ''}>Terminar</button></td>
     `;
     tablaPedidos.appendChild(fila);
 
+    const estadoCell = fila.querySelector('.estado-pedido');
     const btnConfirmar = fila.querySelector('.btn-confirmar');
     const btnTerminar = fila.querySelector('.btn-terminar');
-    const estadoCell = fila.querySelector('.estado-pedido');
 
     btnConfirmar.addEventListener('click', async () => {
       const { error: updateError } = await client
@@ -56,22 +67,22 @@ async function cargarPedidos() {
         });
 
         estadoCell.textContent = 'confirmado';
+        estadoCell.className = 'estado-pedido text-success fw-bold';
         btnConfirmar.disabled = true;
-        alert('Pedido confirmado y correo enviado.');
       } catch (err) {
-        console.error('Error al enviar correo de confirmación:', err);
+        console.error('Error al enviar correo:', err);
         alert('Confirmado, pero falló el correo.');
       }
     });
 
     btnTerminar.addEventListener('click', async () => {
-      const { error: terminarError } = await client
+      const { error: terminadoError } = await client
         .from('pacientes')
         .update({ estado: 'listo' })
         .eq('id', p.id);
 
-      if (terminarError) {
-        console.error('Error al marcar como terminado:', terminarError);
+      if (terminadoError) {
+        console.error('Error al marcar como terminado:', terminadoError);
         alert('No se pudo marcar como terminado.');
         return;
       }
@@ -84,8 +95,9 @@ async function cargarPedidos() {
         });
 
         estadoCell.textContent = 'listo';
+        estadoCell.className = 'estado-pedido text-primary fw-bold';
+        btnConfirmar.disabled = true;
         btnTerminar.disabled = true;
-        alert('Pedido marcado como listo y correo enviado.');
       } catch (err) {
         console.error('Error al enviar correo final:', err);
         alert('Marcado como listo, pero falló el correo.');
@@ -111,7 +123,7 @@ function exportarCSV(pedidos) {
   ]);
 
   const csvContent = [encabezados, ...filas]
-    .map(row => row.map(valor => `"${valor}"`).join(","))
+    .map(row => row.map(val => `"${val}"`).join(","))
     .join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
