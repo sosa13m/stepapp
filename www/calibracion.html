@@ -11,11 +11,13 @@
 <body class="bg-light text-center p-3">
   <h2 class="animate__animated animate__fadeInRight text-success mb-3">Calibración de pie</h2>
 
-  <div id="camera-container" class="border border-5 rounded-3 mx-auto"
-      style="width: 90%; max-width: 400px; border-color: red;">
-    <video id="video" autoplay playsinline class="w-100 rounded-3"></video>
-    <canvas id="canvas" class="d-none"></canvas>
+  <div class="mx-auto" style="width: 90%; max-width: 400px;">
+    <div id="camera-border" class="rounded-4 p-1" style="border: 6px solid red; transition: border-color 0.3s ease;">
+      <video id="video" autoplay playsinline class="w-100 rounded-4"></video>
+      <canvas id="canvas" class="d-none"></canvas>
+    </div>
   </div>
+  
 
 
   <button id="capture-btn" class="btn btn-primary mt-3" disabled>Capturar</button>

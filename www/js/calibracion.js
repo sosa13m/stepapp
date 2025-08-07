@@ -2,7 +2,7 @@ const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const captureBtn = document.getElementById("capture-btn");
-const cameraContainer = document.getElementById("camera-container");
+const cameraContainer = document.getElementById("camera-border"); // ahora apunta al nuevo div externo
 const estadoDistancia = document.getElementById("estado-distancia");
 
 let intervalo = null;
@@ -34,10 +34,7 @@ function detectarDistancia() {
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  // Simula la detección de un pie ocupando un % del alto del video
   const alturaCanvas = canvas.height;
-
-  // Supón que si el pie ocupa entre el 35% y el 50% del alto es buena distancia
   const tamañoAproxDelPie = alturaCanvas * 0.4;
 
   if (tamañoAproxDelPie >= 120 && tamañoAproxDelPie <= 200) {
