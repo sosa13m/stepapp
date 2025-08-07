@@ -27,68 +27,72 @@ async function cargarPedidos() {
       <td>${p.correo}</td>
       <td>${p.medida_cm || '—'}</td>
       <td>${p.receta_url ? `<a class="receta-link" href="${p.receta_url}" target="_blank">Ver</a>` : '—'}</td>
-      <td>${p.estado || 'Pendiente'}</td>
+      <td class="estado-pedido">${p.estado || (p.confirmado ? 'confirmado' : 'pendiente')}</td>
       <td>
-        <button class="btn btn-success" ${p.confirmado ? 'disabled' : ''} onclick="confirmarPedido('${p.id}', '${p.nombre}', '${p.correo}', '${p.codigo_pedido}')">Confirmar</button>
+        <button class="btn btn-success btn-confirmar" ${p.confirmado ? 'disabled' : ''}>Confirmar</button>
       </td>
       <td>
-        <button class="btn btn-primary" onclick="marcarTerminado('${p.id}', '${p.nombre}', '${p.correo}', '${p.codigo_pedido}')">Terminado</button>
+        <button class="btn btn-primary btn-terminar">Terminado</button>
       </td>
     `;
     tablaPedidos.appendChild(fila);
+
+    // Agregar eventos dinámicos
+    const btnConfirmar = fila.querySelector('.btn-confirmar');
+    const btnTerminar = fila.querySelector('.btn-terminar');
+    const estadoCell = fila.querySelector('.estado-pedido');
+
+    btnConfirmar.addEventListener('click', async () => {
+      const { error } = await client
+        .from('pacientes')
+        .update({ confirmado: true, estado: 'confirmado' })
+        .eq('id', p.id);
+
+      if (error) {
+        console.error('Error al confirmar:', error);
+        alert('No se pudo confirmar el pedido.');
+        return;
+      }
+
+      try {
+        await emailjs.send(serviceID, templateConfirmado, {
+          nombre: p.nombre,
+          codigo: p.codigo_pedido,
+          email: p.correo
+        });
+        estadoCell.textContent = 'confirmado';
+        btnConfirmar.disabled = true;
+        alert('Pedido confirmado y correo enviado.');
+      } catch (err) {
+        console.error('Error al enviar correo de confirmación:', err);
+        alert('Pedido confirmado, pero falló el correo.');
+      }
+    });
+
+    btnTerminar.addEventListener('click', async () => {
+      const { error } = await client
+        .from('pacientes')
+        .update({ estado: 'listo' })
+        .eq('id', p.id);
+
+      if (error) {
+        console.error('Error al marcar como terminado:', error);
+        alert('No se pudo marcar como terminado.');
+        return;
+      }
+
+      try {
+        await emailjs.send(serviceID, templateTerminado, {
+          nombre: p.nombre,
+          codigo: p.codigo_pedido,
+          email: p.correo
+        });
+        estadoCell.textContent = 'listo';
+        alert('Pedido marcado como listo y correo enviado.');
+      } catch (err) {
+        console.error('Error al enviar correo final:', err);
+        alert('Marcado como listo, pero falló el correo.');
+      }
+    });
   });
 }
-
-async function confirmarPedido(id, nombre, correo, codigo) {
-  const { error } = await client
-    .from('pacientes')
-    .update({ confirmado: true })
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error al confirmar:', error);
-    alert('No se pudo confirmar el pedido.');
-    return;
-  }
-
-  try {
-    await emailjs.send(serviceID, templateConfirmado, {
-      nombre,
-      codigo,
-      email: correo
-    });
-    alert('Pedido confirmado y correo enviado.');
-    cargarPedidos();
-  } catch (err) {
-    console.error('Error al enviar correo de confirmación:', err);
-    alert('Pedido confirmado, pero fallo el envío del correo.');
-  }
-}
-
-async function marcarTerminado(id, nombre, correo, codigo) {
-  const { error } = await client
-    .from('pacientes')
-    .update({ estado: 'Listo' })
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error al marcar como terminado:', error);
-    alert('No se pudo marcar como terminado.');
-    return;
-  }
-
-  try {
-    await emailjs.send(serviceID, templateTerminado, {
-      nombre,
-      codigo,
-      email: correo
-    });
-    alert('Pedido marcado como listo y correo enviado.');
-    cargarPedidos();
-  } catch (err) {
-    console.error('Error al enviar correo final:', err);
-    alert('Marcado como listo, pero falló el correo.');
-  }
-}
-
-cargarPedidos();
