@@ -6,6 +6,8 @@ const estadoDistancia = document.getElementById("estado-distancia");
 const cameraBorder = document.getElementById("camera-border");
 
 let bodyPixNet = null;
+let puntos = [];
+let modoMedicion = false;
 
 async function iniciarCamara() {
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -33,6 +35,8 @@ async function cargarBodyPix() {
 }
 
 async function analizarFrame() {
+  if (modoMedicion) return; // detener IA al entrar a modo puntos
+
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
 
@@ -42,20 +46,24 @@ async function analizarFrame() {
     segmentationThreshold: 0.7,
   });
 
-  // Filtramos solo pies (parte 22 y 23)
-  const footParts = [22, 23];
-  const footPixels = segmentation.data.filter(part => footParts.includes(part));
-
-  const porcentajePie = (footPixels.length / segmentation.data.length) * 100;
+  const footParts = [22, 23]; // pies izquierdo y derecho
+  const total = segmentation.data.length;
+  const footPixels = segmentation.data.filter(part => footParts.includes(part)).length;
+  const porcentajePie = (footPixels / total) * 100;
 
   if (porcentajePie > 1.5 && porcentajePie < 4.5) {
     cameraBorder.style.border = "6px solid green";
     estadoDistancia.textContent = "Distancia correcta";
     estadoDistancia.className = "mt-3 fw-bold text-white bg-success rounded-2 p-2";
     captureBtn.disabled = false;
-  } else if (footPixels.length > 10) {
+  } else if (porcentajePie >= 4.5) {
     cameraBorder.style.border = "6px solid red";
-    estadoDistancia.textContent = "Muy cerca o muy lejos";
+    estadoDistancia.textContent = "Estás muy cerca";
+    estadoDistancia.className = "mt-3 fw-bold text-white bg-danger rounded-2 p-2";
+    captureBtn.disabled = true;
+  } else if (porcentajePie <= 1.5 && footPixels > 10) {
+    cameraBorder.style.border = "6px solid red";
+    estadoDistancia.textContent = "Estás muy lejos";
     estadoDistancia.className = "mt-3 fw-bold text-white bg-danger rounded-2 p-2";
     captureBtn.disabled = true;
   } else {
@@ -67,9 +75,54 @@ async function analizarFrame() {
 }
 
 async function loopDeteccion() {
-  while (true) {
+  while (!modoMedicion) {
     await analizarFrame();
     await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+}
+
+captureBtn.addEventListener("click", () => {
+  // Detener IA
+  modoMedicion = true;
+  video.style.display = "none";
+  canvas.classList.remove("d-none");
+  estadoDistancia.textContent = "Haz clic en talón y punta del pie";
+  estadoDistancia.className = "mt-3 fw-bold text-white bg-primary rounded-2 p-2";
+
+  puntos = [];
+
+  canvas.addEventListener("click", onCanvasClick);
+});
+
+function onCanvasClick(e) {
+  if (puntos.length >= 2) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  puntos.push({ x, y });
+
+  ctx.fillStyle = "yellow";
+  ctx.beginPath();
+  ctx.arc(x, y, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (puntos.length === 2) {
+    const dx = puntos[1].x - puntos[0].x;
+    const dy = puntos[1].y - puntos[0].y;
+    const distanciaPx = Math.sqrt(dx * dx + dy * dy);
+
+    const pixelesPorCm = 33.5; // valor calibrado (puedes ajustar)
+    const medidaCm = (distanciaPx / pixelesPorCm).toFixed(1);
+
+    localStorage.setItem("medida_calculada", medidaCm);
+    estadoDistancia.textContent = `Medida estimada: ${medidaCm} cm`;
+    estadoDistancia.className = "mt-3 fw-bold text-white bg-info rounded-2 p-2";
+
+    setTimeout(() => {
+      window.location.href = "foto-receta.html";
+    }, 2000);
   }
 }
 
