@@ -41,10 +41,11 @@ async function cargarPedidos() {
     const btnTerminar = fila.querySelector('.btn-terminar');
     const estadoCell = fila.querySelector('.estado-pedido');
 
+    // Confirmar pedido
     btnConfirmar.addEventListener('click', async () => {
       const { error } = await client
         .from('pacientes')
-        .update({ confirmado: true, estado: 'confirmado' })
+        .update({ confirmado: true, estado: 'confirmado' }) // <- aseguramos que se actualicen ambos
         .eq('id', p.id);
 
       if (error) {
@@ -68,6 +69,7 @@ async function cargarPedidos() {
       }
     });
 
+    // Marcar como terminado
     btnTerminar.addEventListener('click', async () => {
       const { error } = await client
         .from('pacientes')
@@ -96,7 +98,7 @@ async function cargarPedidos() {
     });
   });
 
-  // Evento exportar
+  // Botón exportar CSV
   const btnExportar = document.getElementById("btn-exportar");
   if (btnExportar) {
     btnExportar.onclick = () => exportarCSV(data);
