@@ -118,7 +118,7 @@ function onCanvasClick(e) {
     const dy = puntos[1].y - puntos[0].y;
     const distanciaPx = Math.sqrt(dx * dx + dy * dy);
 
-    const pixelesPorCm = 20.5; // ajustado según tu medida real
+    const pixelesPorCm = 18.03;
     const medidaCm = (distanciaPx / pixelesPorCm).toFixed(1);
 
     localStorage.setItem("medida_calculada", medidaCm);
