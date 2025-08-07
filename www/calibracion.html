@@ -14,15 +14,16 @@
   <div class="mx-auto" style="width: 90%; max-width: 400px;">
     <div id="camera-border" class="rounded-4 p-1" style="border: 6px solid red; transition: border-color 0.3s ease;">
       <video id="video" autoplay playsinline class="w-100 rounded-4"></video>
-      <canvas id="canvas" class="d-none"></canvas>
+      <canvas id="canvas" class="d-block mt-2 w-100" style="max-width: 400px;"></canvas>
     </div>
   </div>
   
-
-
-  <button id="capture-btn" class="btn btn-primary mt-3" disabled>Capturar</button>
-
-  <p class="text-muted mt-2" id="estado-distancia">Calculando distancia óptima...</p>
+  <button id="capture-btn" class="btn btn-primary mt-3">Confirmar medida</button>
+  
+  <p id="estado-distancia" class="mt-2 fw-bold px-3 py-2 rounded-2 bg-dark text-white">
+    Haz clic en los extremos del pie para medir.
+  </p>
+  
 
   <script src="js/calibracion.js"></script>
 </body>
