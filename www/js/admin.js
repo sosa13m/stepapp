@@ -9,7 +9,11 @@ const templateTerminado = 'template_n8cfhk6';
 const tablaPedidos = document.getElementById('tabla-pedidos');
 
 async function cargarPedidos() {
-  const { data, error } = await client.from('pacientes').select('*');
+  // ⛳️ Aquí se asegura de traer el campo 'id'
+  const { data, error } = await client
+    .from('pacientes')
+    .select('id, nombre, correo, medida_cm, receta_url, codigo_pedido, estado, confirmado');
+
   if (error) {
     console.error('Error al obtener pedidos:', error);
     return;
@@ -48,28 +52,24 @@ async function cargarPedidos() {
     const btnTerminar = fila.querySelector('.btn-terminar');
 
     btnConfirmar.addEventListener('click', async () => {
-      console.log('ID del paciente:', p.id); // Verifica el ID
-    
       const { data: updated, error: updateError } = await client
         .from('pacientes')
         .update({ confirmado: true, estado: 'confirmado' })
         .eq('id', p.id)
-        .select();
-    
+        .select(); // 👈 Necesario para confirmar el cambio
+
       if (updateError) {
         console.error('Error al confirmar:', updateError);
         alert('No se pudo confirmar el pedido.');
         return;
       }
-    
+
       if (!updated || updated.length === 0) {
         console.warn('No se encontró ningún paciente con ese ID para actualizar.');
         alert('No se encontró el pedido en la base de datos.');
         return;
       }
-    
-      console.log(' Pedido confirmado y actualizado:', updated);
-    
+
       // Enviar correo
       try {
         await emailjs.send(serviceID, templateConfirmado, {
@@ -77,26 +77,24 @@ async function cargarPedidos() {
           codigo: p.codigo_pedido,
           email: p.correo
         });
-    
         console.log('Correo enviado correctamente.');
       } catch (emailError) {
         console.error('Error al enviar el correo:', emailError);
       }
-    
-      // Actualizar UI
+
+      // Actualizar visualmente
       estadoCell.textContent = "confirmado";
       estadoCell.className = "estado-pedido text-success fw-bold";
       btnConfirmar.disabled = true;
       btnConfirmar.classList.add("disabled");
     });
-    
-    
 
     btnTerminar.addEventListener('click', async () => {
-      const { error: terminadoError } = await client
+      const { data: terminadoData, error: terminadoError } = await client
         .from('pacientes')
         .update({ estado: 'listo' })
-        .eq('id', p.id);
+        .eq('id', p.id)
+        .select();
 
       if (terminadoError) {
         console.error('Error al marcar como terminado:', terminadoError);
