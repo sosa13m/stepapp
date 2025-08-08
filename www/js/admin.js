@@ -48,32 +48,49 @@ async function cargarPedidos() {
     const btnTerminar = fila.querySelector('.btn-terminar');
 
     btnConfirmar.addEventListener('click', async () => {
-      const { error: updateError } = await client
+      console.log('ID del paciente:', p.id); // Verifica el ID
+    
+      const { data: updated, error: updateError } = await client
         .from('pacientes')
         .update({ confirmado: true, estado: 'confirmado' })
-        .eq('id', p.id);
-
+        .eq('id', p.id)
+        .select();
+    
       if (updateError) {
         console.error('Error al confirmar:', updateError);
         alert('No se pudo confirmar el pedido.');
         return;
       }
-
+    
+      if (!updated || updated.length === 0) {
+        console.warn('No se encontró ningún paciente con ese ID para actualizar.');
+        alert('No se encontró el pedido en la base de datos.');
+        return;
+      }
+    
+      console.log(' Pedido confirmado y actualizado:', updated);
+    
+      // Enviar correo
       try {
         await emailjs.send(serviceID, templateConfirmado, {
           nombre: p.nombre,
           codigo: p.codigo_pedido,
           email: p.correo
         });
-
-        estadoCell.textContent = 'confirmado';
-        estadoCell.className = 'estado-pedido text-success fw-bold';
-        btnConfirmar.disabled = true;
-      } catch (err) {
-        console.error('Error al enviar correo:', err);
-        alert('Confirmado, pero falló el correo.');
+    
+        console.log('Correo enviado correctamente.');
+      } catch (emailError) {
+        console.error('Error al enviar el correo:', emailError);
       }
+    
+      // Actualizar UI
+      estadoCell.textContent = "confirmado";
+      estadoCell.className = "estado-pedido text-success fw-bold";
+      btnConfirmar.disabled = true;
+      btnConfirmar.classList.add("disabled");
     });
+    
+    
 
     btnTerminar.addEventListener('click', async () => {
       const { error: terminadoError } = await client
