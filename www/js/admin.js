@@ -9,7 +9,6 @@ const templateTerminado = 'template_n8cfhk6';
 const tablaPedidos = document.getElementById('tabla-pedidos');
 
 async function cargarPedidos() {
-  // ⛳️ Aquí se asegura de traer el campo 'id'
   const { data, error } = await client
     .from('pacientes')
     .select('id, nombre, correo, medida_cm, receta_url, codigo_pedido, estado, confirmado');
@@ -52,11 +51,13 @@ async function cargarPedidos() {
     const btnTerminar = fila.querySelector('.btn-terminar');
 
     btnConfirmar.addEventListener('click', async () => {
+      console.log('ID del paciente:', p.id); // Debug
+
       const { data: updated, error: updateError } = await client
         .from('pacientes')
         .update({ confirmado: true, estado: 'confirmado' })
         .eq('id', p.id)
-        .select(); // 👈 Necesario para confirmar el cambio
+        .select();
 
       if (updateError) {
         console.error('Error al confirmar:', updateError);
@@ -70,19 +71,18 @@ async function cargarPedidos() {
         return;
       }
 
-      // Enviar correo
       try {
         await emailjs.send(serviceID, templateConfirmado, {
           nombre: p.nombre,
           codigo: p.codigo_pedido,
           email: p.correo
         });
+
         console.log('Correo enviado correctamente.');
       } catch (emailError) {
         console.error('Error al enviar el correo:', emailError);
       }
 
-      // Actualizar visualmente
       estadoCell.textContent = "confirmado";
       estadoCell.className = "estado-pedido text-success fw-bold";
       btnConfirmar.disabled = true;
@@ -90,11 +90,10 @@ async function cargarPedidos() {
     });
 
     btnTerminar.addEventListener('click', async () => {
-      const { data: terminadoData, error: terminadoError } = await client
+      const { error: terminadoError } = await client
         .from('pacientes')
         .update({ estado: 'listo' })
-        .eq('id', p.id)
-        .select();
+        .eq('id', p.id);
 
       if (terminadoError) {
         console.error('Error al marcar como terminado:', terminadoError);
