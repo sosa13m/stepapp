@@ -51,23 +51,16 @@ async function cargarPedidos() {
     const btnTerminar = fila.querySelector('.btn-terminar');
 
     btnConfirmar.addEventListener('click', async () => {
-      console.log('ID del paciente:', p.id); // Debug
+      console.log('ID del paciente:', p.id);
 
-      const { data: updated, error: updateError } = await client
+      const { error: updateError } = await client
         .from('pacientes')
         .update({ confirmado: true, estado: 'confirmado' })
-        .eq('id', p.id)
-        .select();
+        .eq('id', p.id);
 
       if (updateError) {
         console.error('Error al confirmar:', updateError);
         alert('No se pudo confirmar el pedido.');
-        return;
-      }
-
-      if (!updated || updated.length === 0) {
-        console.warn('No se encontró ningún paciente con ese ID para actualizar.');
-        alert('No se encontró el pedido en la base de datos.');
         return;
       }
 
@@ -77,12 +70,12 @@ async function cargarPedidos() {
           codigo: p.codigo_pedido,
           email: p.correo
         });
-
         console.log('Correo enviado correctamente.');
       } catch (emailError) {
         console.error('Error al enviar el correo:', emailError);
       }
 
+      // Actualizar UI sin necesidad de recargar
       estadoCell.textContent = "confirmado";
       estadoCell.className = "estado-pedido text-success fw-bold";
       btnConfirmar.disabled = true;
