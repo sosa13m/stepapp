@@ -141,5 +141,13 @@ function exportarCSV(pedidos) {
   a.click();
   URL.revokeObjectURL(url);
 }
+// Botón cerrar sesión
+const btnLogout = document.getElementById('btn-logout');
+if (btnLogout) {
+  btnLogout.addEventListener('click', () => {
+    localStorage.removeItem('adminLoggedIn');
+    window.location.href = 'admin-login.html';
+  });
+}
 
 cargarPedidos();
