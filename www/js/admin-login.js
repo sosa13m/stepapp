@@ -1,41 +1,24 @@
-// js/admin-login.js
-// Datos admin hardcoded
-const ADMIN_EMAIL = "astorstepapp@gmail.com";
-const ADMIN_PASS = "Astor@arica20";
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const loginForm = document.getElementById("admin-login-form");
+const errorDiv = document.getElementById("error-message");
 
-const form = document.getElementById("admin-login-form");
-const errorMessage = document.getElementById("error-message");
+const adminCredenciales = {
+  email: "admin@stepapp.cl",
+  password: "stepadmin123"
+};
 
-function setSession(email, remember) {
-  if (remember) {
-    localStorage.setItem("adminLoggedIn", email);
-  } else {
-    sessionStorage.setItem("adminLoggedIn", email);
-  }
-}
-
-function checkSession() {
-  return localStorage.getItem("adminLoggedIn") || sessionStorage.getItem("adminLoggedIn");
-}
-
-// Si ya está logeado, redirigir al dashboard
-if (checkSession()) {
-  window.location.href = "admin.html";
-}
-
-form.addEventListener("submit", (e) => {
+loginForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  errorMessage.style.display = "none";
 
-  const email = form.email.value.trim();
-  const password = form.password.value;
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
 
-  if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-    const remember = form.rememberMe.checked;
-    setSession(email, remember);
+  if (email === adminCredenciales.email && password === adminCredenciales.password) {
+    localStorage.setItem("admin_token", "token_autenticado_stepapp");
     window.location.href = "admin.html";
   } else {
-    errorMessage.textContent = "Correo o contraseña incorrectos.";
-    errorMessage.style.display = "block";
+    errorDiv.textContent = "Credenciales incorrectas.";
+    errorDiv.style.display = "block";
   }
 });
