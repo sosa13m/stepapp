@@ -4,8 +4,8 @@ const loginForm = document.getElementById("admin-login-form");
 const errorDiv = document.getElementById("error-message");
 
 const adminCredenciales = {
-  email: "admin@stepapp.cl",
-  password: "stepadmin123"
+  email: "astorstepapp@gmail.com",
+  password: "Astor@arica20"
 };
 
 loginForm.addEventListener("submit", (e) => {
