@@ -1,5 +1,6 @@
 {
-  "appId": "com.stepapp.astor",
-  "appName": "stepapp",
-  "webDir": "www"
+  "appId": "app.stepapp",
+  "appName": "StepApp",
+  "webDir": "www",
+  "server": { "androidScheme": "https" }
 }
