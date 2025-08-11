@@ -1,37 +1,33 @@
 workflows:
-  build-android:
-    name: Build Android APK
+  android-cordova:
+    name: Android (Cordova)
     environment:
-      node: 20.11.1
+      node: 18.18.2
       java: 17
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+        - $HOME/.npm
+        - node_modules
     scripts:
-      - npm install -g @capacitor/cli
-      - npm install
-      - npx cap sync
-      - npx cap copy android
-      - find . -name "*.gradle" -type f -exec sed -i '' 's/21/17/g' {} +
-      - cd android && ./gradlew assembleDebug
+      - name: Instalar dependencias
+        script: |
+          npm ci || true
+          npm i -g cordova
+      - name: Preparar Android
+        script: |
+          cordova platform rm android || true
+          cordova platform add android
+          cordova prepare android
+      - name: Compilar APK/AAB (release, sin firma)
+        script: |
+          cd platforms/android
+          ./gradlew assembleRelease
+          ./gradlew bundleRelease
     artifacts:
-      - android/app/build/outputs/**/*.apk
-    publishing:
-      email:
-        recipients:
-          - astorstepapp@gmail.com
-
-
-  build-ios:
-    name: Build iOS IPA
-    environment:
-      node: 20.11.1
-      xcode: 15.0 
-    scripts:
-      - npm install -g @capacitor/cli
-      - npm install
-      - npx cap sync
-      - npx cap copy ios
-      - cd ios && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos
-    artifacts:
-      - ios/build/**/*.ipa
+      - platforms/android/app/build/outputs/apk/release/*.apk
+      - platforms/android/app/build/outputs/bundle/release/*.aab
     publishing:
       email:
         recipients:
