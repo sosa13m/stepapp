@@ -4,40 +4,25 @@ workflows:
     environment:
       node: 18
     scripts:
-      - name: Seleccionar Java 17 y Android SDK (macOS)
+      - name: Seleccionar Java 17 (macOS) y configurar Gradle
         script: |
-          # Java 17 (evita usar JAVA_HOME de Linux)
+          # JDK 17 correcto en macOS (evita rutas de Linux)
           export JAVA_HOME=$(/usr/libexec/java_home -v 17)
           echo "JAVA_HOME=$JAVA_HOME"
           java -version
 
-          # Forzar a Gradle a usar esta JDK
+          # Forzar a Gradle a usar esta JDK y permitir descarga de SDK
           echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
-
-          # Android SDK de Codemagic (macOS) y PATH
-          export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
-          export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator"
-
-          # Localiza cmdline-tools (latest o el primero disponible) y expone sdkmanager
-          if [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" ]; then
-            export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
-          else
-            CT=$(ls -d $ANDROID_SDK_ROOT/cmdline-tools/*/bin 2>/dev/null | head -n1)
-            [ -n "$CT" ] && export PATH="$PATH:$CT"
-          fi
-
-          # Diagnóstico
-          which sdkmanager || echo "sdkmanager no está en PATH (se añadirá si existe cmdline-tools)"
-          sdkmanager --version || true
-
-      - name: Instalar SDK 35 y aceptar licencias
-        script: |
-          yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
-          yes | sdkmanager --licenses
+          echo "android.builder.sdkDownload=true" >> android/gradle.properties
 
       - name: Instalar dependencias
         script: |
           npm ci
+
+      - name: Aceptar licencias (solo si AGP las pide)
+        script: |
+          yes | "$JAVA_HOME/bin/javac" -version >/dev/null 2>&1 || true
+          # AGP gestionará descargas; este paso suele no ser necesario
 
       - name: Sincronizar Capacitor (genera/actualiza ./android)
         script: |
