@@ -1,19 +1,30 @@
 workflows:
   android_capacitor_debug:
     name: Android (Capacitor) – Debug APK
+    # No pongas JAVA_HOME aquí; lo resolvemos en un script (macOS)
     environment:
-      vars:
-        JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      node: 18
     scripts:
+      - name: Seleccionar Java 17 (macOS) y aplicar a Gradle
+        script: |
+          export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
+          # Asegura que Gradle use esta JDK
+          echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
+
       - name: Instalar dependencias
         script: |
           npm ci
+
       - name: Instalar Android SDK 35
         script: |
           yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
       - name: Sincronizar Capacitor (genera/actualiza ./android)
         script: |
           npx cap sync android
+
       - name: Compilar APK debug con Gradle
         script: |
           cd android
