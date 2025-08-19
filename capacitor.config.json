@@ -2,5 +2,8 @@
   "appId": "app.stepapp",
   "appName": "StepApp",
   "webDir": "www",
-  "server": { "androidScheme": "https" }
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  }
 }

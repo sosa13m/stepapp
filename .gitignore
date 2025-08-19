@@ -1,3 +1,16 @@
-node_modules
+node_modules/
+www/*-cache/*
 *.log
 .DS_Store
+
+# Android / Capacitor
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/**/build/
+android/**/captures/
+
+# iOS (por si luego lo agregas)
+ios/DerivedData/
+ios/App/build/
