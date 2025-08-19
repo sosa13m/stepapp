@@ -4,33 +4,36 @@ workflows:
     environment:
       node: 18
     scripts:
-      - name: Resolver Java 17 y Android SDK (macOS)
+      - name: Seleccionar Java 17 y Android SDK (macOS)
         script: |
-          # Java 17
+          # Java 17 (evita usar JAVA_HOME de Linux)
           export JAVA_HOME=$(/usr/libexec/java_home -v 17)
           echo "JAVA_HOME=$JAVA_HOME"
           java -version
+
           # Forzar a Gradle a usar esta JDK
           echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
 
-          # Android SDK root de Codemagic (macOS)
+          # Android SDK de Codemagic (macOS) y PATH
           export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
-
-          # Añadir platform-tools y (si existe) cmdline-tools/latest al PATH
           export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator"
+
+          # Localiza cmdline-tools (latest o el primero disponible) y expone sdkmanager
           if [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" ]; then
             export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
-            SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
           else
-            # fallback: 1ª carpeta de cmdline-tools disponible
-            SDKMANAGER=$(ls -d $ANDROID_SDK_ROOT/cmdline-tools/*/bin 2>/dev/null | head -n1)/sdkmanager
-            export PATH="$PATH:$(dirname "$SDKMANAGER")"
+            CT=$(ls -d $ANDROID_SDK_ROOT/cmdline-tools/*/bin 2>/dev/null | head -n1)
+            [ -n "$CT" ] && export PATH="$PATH:$CT"
           fi
-          "$SDKMANAGER" --version
 
-      - name: Instalar Android SDK 35
+          # Diagnóstico
+          which sdkmanager || echo "sdkmanager no está en PATH (se añadirá si existe cmdline-tools)"
+          sdkmanager --version || true
+
+      - name: Instalar SDK 35 y aceptar licencias
         script: |
           yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+          yes | sdkmanager --licenses
 
       - name: Instalar dependencias
         script: |
@@ -40,10 +43,17 @@ workflows:
         script: |
           npx cap sync android
 
-      - name: Compilar APK debug con Gradle
+      - name: Compilar APK debug
         script: |
           cd android
+          chmod +x gradlew
           ./gradlew clean assembleDebug
 
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
+
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+        - $CM_BUILD_DIR/node_modules
