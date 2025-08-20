@@ -1,53 +1,66 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calibración - StepApp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="\css\style.css">
-  <!-- Animate.css -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-  <!-- Tus animaciones y botones -->
-  <link rel="stylesheet" href="css/animations.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calibración</title>
 
+  <!-- Bootstrap (si ya lo tienes global, puedes omitir esta línea) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+
+  <style>
+    /* Mínimo necesario, respeta tu diseño anterior */
+    #camera-border {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    #video, #canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+
+  <!-- TFJS + BodyPix (versiones estables) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
 </head>
-<body class="bg-light text-center p-3">
-  <body class="bg-anim animate__animated animate__fadeIn">
+<body class="bg-light">
   <button id="btn-back" class="btn-back" type="button" aria-label="Volver">Atrás</button>
+  <script>
+    (function(){
+      const b = document.getElementById('btn-back');
+      if (!b) return;
+      b.addEventListener('click', ()=>{
+        if (history.length > 1) history.back();
+        else window.location.href = 'index.html';
+      });
+    })();
+  </script>
+  <script defer src="js/animations.js"></script>
 
-  <h2 class="animate__animated animate__fadeInRight text-success mb-3">Calibración de pie</h2>
+  <div class="container py-4" style="max-width:720px;">
+    <h3 class="mb-3">Calibración</h3>
 
-  <div id="camera-wrapper" class="mx-auto" style="width: 90%; max-width: 400px;">
-    <div id="camera-border" class="rounded-4 p-1" style="transition: border 0.3s ease;">
-      <video id="video" autoplay playsinline muted class="w-100 rounded-4"></video>
-      <canvas id="canvas" class="d-none" style="max-width: 100%; height: auto; display: block;"></canvas>
+    <div id="camera-border" class="mb-3">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="canvas" class="d-none"></canvas>
+    </div>
 
+    <div id="estado-distancia" class="mt-3 fw-bold text-white bg-dark rounded-2 p-2">
+      Esperando detectar el pie...
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button id="capture-btn" class="btn btn-primary" disabled>Capturar</button>
+      <a href="index.html" class="btn btn-outline-secondary">Cancelar</a>
     </div>
   </div>
-  
-  <button id="capture-btn" class="btn btn-primary mt-3" disabled>Capturar</button>
-  
-  <p id="estado-distancia" class="mt-3 fw-bold text-white bg-dark rounded-2 p-2">
-    Analizando distancia del pie...
-  </p>
-  
-  <script>
-  (function(){
-    const b = document.getElementById('btn-back');
-    if (!b) return;
-    b.addEventListener('click', ()=>{
-      if (history.length > 1) history.back();
-      else window.location.href = 'index.html';
-    });
-  })();
-</script>
-<script defer src="js/animations.js"></script>
 
-  <!-- TensorFlow + BodyPix -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0"></script>
-  <script src="js/calibracion.js"></script>
-  
+  <!-- Tu lógica -->
+  <script src="calibracion.js"></script>
+  <script src="js/back.js" defer></script>
+
 </body>
 </html>

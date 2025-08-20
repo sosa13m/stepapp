@@ -101,6 +101,8 @@
   </style>
 </head>
 <body>
+  <button id="btn-back" class="btn-back" type="button" aria-label="Volver">Atrás</button>
+
   <div class="card">
     <div class="checkmark"></div>
     <div class="title">¡Pago Exitoso!</div>
@@ -113,5 +115,7 @@
     const codigo = localStorage.getItem("codigoPedido");
     document.getElementById("codigoPedido").textContent = codigo ? `Código: ${codigo}` : "Código no disponible";
   </script>
+  <script src="js/back.js" defer></script>
+
 </body>
 </html>
