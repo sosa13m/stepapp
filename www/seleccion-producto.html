@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Selecciona tu Plantilla</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet"/>
-  <link rel="icon" href="https://www.astorarica.cl/favicon.ico" />
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- Tus animaciones y botones -->
+  <link rel="stylesheet" href="css/animations.css">
+
   <style>
     body {
       background: linear-gradient(160deg, #ffffff, #e3f2fd);
@@ -47,6 +50,8 @@
   </style>
 </head>
 <body>
+  <body class="bg-anim animate__animated animate__fadeIn">
+  <button id="btn-back" class="btn-back" type="button" aria-label="Volver">Atrás</button>
 
   <h1 class="animate__animated animate__fadeInDown">Selecciona el tipo de plantilla</h1>
 
@@ -55,9 +60,21 @@
   <div class="opcion" onclick="seleccionarPlantilla('deportiva')">Plantilla Deportiva</div>
   <div class="opcion" onclick="seleccionarPlantilla('personalizada')">Plantilla Personalizada</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
 
+  <script>
+    (function(){
+      const b = document.getElementById('btn-back');
+      if (!b) return;
+      b.addEventListener('click', ()=>{
+        if (history.length > 1) history.back();
+        else window.location.href = 'index.html';
+      });
+    })();
+  </script>
+  <script defer src="js/animations.js"></script>
+  
   <script>
     async function seleccionarPlantilla(plantillaSeleccionada) {
       const datos = JSON.parse(localStorage.getItem("datosUsuario"));

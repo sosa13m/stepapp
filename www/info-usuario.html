@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>StepApp - Usuario</title>
 
-  <!-- Animate.css y Bootstrap -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- Tus animaciones y botones -->
+  <link rel="stylesheet" href="css/animations.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <style>
@@ -59,6 +61,9 @@
   </style>
 </head>
 <body>
+  <body class="bg-anim animate__animated animate__fadeIn">
+  <button id="btn-back" class="btn-back" type="button" aria-label="Volver">Atrás</button>
+
   <div class="form-container animate__animated animate__fadeIn">
     <h2 class="animate__animated animate__fadeInDown">Tus Datos</h2>
     <form id="user-form">
@@ -76,6 +81,18 @@
       <button type="submit">Continuar</button>
     </form>
   </div>
+
+  <script>
+    (function(){
+      const b = document.getElementById('btn-back');
+      if (!b) return;
+      b.addEventListener('click', ()=>{
+        if (history.length > 1) history.back();
+        else window.location.href = 'index.html';
+      });
+    })();
+  </script>
+  <script defer src="js/animations.js"></script>
 
   <!-- JS: Supabase, regiones, lógica -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>

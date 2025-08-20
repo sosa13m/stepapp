@@ -6,7 +6,11 @@
   <title>Consulta tu pedido - StepApp</title>
   <link rel="icon" href="https://www.astorarica.cl/wp-content/uploads/2021/09/favicon.ico">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- Tus animaciones y botones -->
+  <link rel="stylesheet" href="css/animations.css">
+
   <style>
     body {
       background: linear-gradient(160deg, #f1f8ff 0%, #acffa4 100%);
@@ -43,6 +47,8 @@
   </style>
 </head>
 <body>
+  <body class="bg-anim animate__animated animate__fadeIn">
+    <button id="btn-back" class="btn-back" type="button" aria-label="Volver">Atrás</button>
 
   <div class="card animate__animated animate__fadeInUp">
     <h2 class="title">Consulta tu pedido</h2>
@@ -57,7 +63,18 @@
 
     <p class="text-center mt-3 mb-0 muted">Ingresa el código de 4 dígitos que te dimos al finalizar.</p>
   </div>
-
+  <script>
+    (function(){
+      const b = document.getElementById('btn-back');
+      if (!b) return;
+      b.addEventListener('click', ()=>{
+        if (history.length > 1) history.back();
+        else window.location.href = 'index.html';
+      });
+    })();
+  </script>
+  <script defer src="js/animations.js"></script>
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/ver-pedido.js"></script>
 </body>

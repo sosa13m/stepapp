@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login Admin - StepApp</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- Tus animaciones y botones -->
+  <link rel="stylesheet" href="css/animations.css">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
     body { margin: 0; height: 100vh; background: linear-gradient(135deg, #0d6efd 0%, #198754 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; }
@@ -20,6 +24,9 @@
   </style>
 </head>
 <body>
+  <body class="bg-anim animate__animated animate__fadeIn">
+  <button id="btn-back" class="btn-back" type="button" aria-label="Volver">Atrás</button>
+
   <div class="login-container animate__animated animate__bounceInDown">
     <h1>Ingreso Administrador</h1>
     <form id="admin-login-form" novalidate>
@@ -35,6 +42,18 @@
       <div id="error-message" class="error-msg" style="display:none;"></div>
     </form>
   </div>
+  <script>
+    (function(){
+      const b = document.getElementById('btn-back');
+      if (!b) return;
+      b.addEventListener('click', ()=>{
+        if (history.length > 1) history.back();
+        else window.location.href = 'index.html';
+      });
+    })();
+  </script>
+  <script defer src="js/animations.js"></script>
+  
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"></script>
   <script type="module" src="js/supabase-config.js"></script>
   <script type="module" src="js/admin-login.js"></script>

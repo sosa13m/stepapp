@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Panel de Administración</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- Tus animaciones y botones -->
+  <link rel="stylesheet" href="css/animations.css">
+
   <link rel="icon" href="https://www.astorarica.cl/favicon.ico" />
 </head>
 <body class="bg-light">
@@ -45,7 +49,20 @@
   </style>
 </head>
 <body>
-
+  <body class="bg-anim animate__animated animate__fadeIn">
+  <button id="btn-back" class="btn-back" type="button" aria-label="Volver">Atrás</button>
+  <script>
+    (function(){
+      const b = document.getElementById('btn-back');
+      if (!b) return;
+      b.addEventListener('click', ()=>{
+        if (history.length > 1) history.back();
+        else window.location.href = 'index.html';
+      });
+    })();
+  </script>
+  <script defer src="js/animations.js"></script>
+  
 <script>
   const token = localStorage.getItem("admin_token");
   if (!token) {
